@@ -470,9 +470,6 @@ end)
 -- Agora criamos a Label de verdade (ela vai aparecer embaixo do botão na UI)
 LucroLabel = InfoTab:Label("Lucro em Inventário: $0 (0 bags)")
 
--- GRUPO 2: ESTOQUE E CAPACIDADE
-InfoTab:Section("Estoque e Produção")
-
 InfoTab:Button("Calcular Capacidade 🍡", function()
     local p = math.min(countItems("Sugar Block Bag"), countItems("Water"), countItems("Gelatin"))        
     if EstoqueLabel then

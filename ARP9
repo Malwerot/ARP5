@@ -1,80 +1,36 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Axios Hub - Laboratory Edition", "Midnight")
-
+local Window = Library.CreateLib("Axios - God Farm", "Midnight")
 local Tab = Window:NewTab("Auto Farm")
-local Section = Tab:NewSection("Controle de Animações & Anchored")
+local Section = Tab:NewSection("Modificadores de Tarefa")
 
--- [[ VARIÁVEIS DE CONTROLE ]] --
-local antiAnimPotato = false
-local antiAnimBag = false
-local antiAnimBowls = false
-local antiAnchor = false 
-
--- [[ FUNÇÃO DE LIMPEZA ]] --
-local function CleanPlayerState()
-    local char = game.Players.LocalPlayer.Character
-    if not char then return end
-    
-    local humanoid = char:FindFirstChild("Humanoid")
-
-    -- 1. Para as Animações
-    if humanoid then
-        local animator = humanoid:FindFirstChildOfClass("Animator")
-        if animator then
-            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-                track:Stop(0)
+Section:NewToggle("Interação Instantânea", "Tira o tempo de segurar o E", function(state)
+    _G.Instant = state
+    task.spawn(function()
+        while _G.Instant do
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("ProximityPrompt") then
+                    v.HoldDuration = 0 -- Não precisa mais segurar!
+                end
             end
+            task.wait(2)
         end
-    end
+    end)
+end)
 
-    -- 2. Destrava o Anchored (Se o Toggle estiver ON)
-    if antiAnchor then
-        for _, part in ipairs(char:GetDescendants()) do
-            if part:IsA("BasePart") and part.Anchored then
-                part.Anchored = false
-            end
-        end
-        -- O pulo é essencial para quebrar o estado de "ocupado" do ProximityPrompt
-        if humanoid then humanoid.Jump = true end
-    end
-end
+Section:NewToggle("Auto-Desgrudar", "Pula e desancora ao interagir", function(state)
+    _G.AntiFreeze = state
+end)
 
--- [[ LOOPS DE MONITORAMENTO ]] --
-task.spawn(function()
-    while true do
-        if antiAnimPotato or antiAnimBag or antiAnimBowls then
-            CleanPlayerState()
-        end
+-- Lógica para desgrudar automaticamente ao terminar uma ação
+game:GetService("ProximityPromptService").PromptButtonHoldEnded:Connect(function(prompt, player)
+    if _G.AntiFreeze and player == game.Players.LocalPlayer then
         task.wait(0.1)
+        local char = player.Character
+        if char then
+            char.HumanoidRootPart.Anchored = false
+            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
     end
 end)
 
--- [[ INTERFACE ]] --
-
-Section:NewToggle("Anti-Anchor (Desgrudar)", "Impede que o jogo te prenda no chão", function(state)
-    antiAnchor = state
-end)
-
-Section:NewToggle("No-Anim: Potato Cutter", "Cancela animação das Batatas", function(state)
-    antiAnimPotato = state
-end)
-
-Section:NewToggle("No-Anim: Plastic Bag", "Cancela animação da Sacola", function(state)
-    antiAnimBag = state
-end)
-
-Section:NewToggle("No-Anim: Bowls", "Cancela animação das Tigelas", function(state)
-    antiAnimBowls = state
-end)
-
-local Utils = Window:NewTab("Utils")
-local uSec = Utils:NewSection("Ações Rápidas")
-
-uSec:NewButton("Forçar Desbloqueio", "Corta anim e desancora agora", function()
-    local oldAnchor = antiAnchor
-    antiAnchor = true
-    CleanPlayerState()
-    antiAnchor = oldAnchor
-end)
-
-print("Axios Hub v3.1 - Limpo!")
+print("Novo sistema carregado. Tente a Interação Instantânea!")

@@ -1,33 +1,24 @@
--- [[ AXIOS LOGGER V2 - COMPATIBLE VERSION ]]
-print("--- MONITOR DE COMPRAS INICIADO ---")
+-- [[ TESTADOR DE COMPRA EM MASSA - AXIOS ]]
+local quantidade = 10 -- Mude para quanto você quer comprar
+local itemNome = "Water" -- Nome exato que aparece no botão da imagem
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local function tentarComprar()
+    -- Procura o Remote de Loja no ReplicatedStorage (lugar mais comum)
+    local remote = game:GetService("ReplicatedStorage"):FindFirstChild("ShopRemote", true) 
+                   or game:GetService("ReplicatedStorage"):FindFirstChild("Purchase", true)
+                   or game:GetService("ReplicatedStorage"):FindFirstChild("BuyItem", true)
 
--- Esta função vai varrer o jogo atrás de qualquer sinal de disparo para o servidor
-local function monitorRemotes(parent)
-    for _, obj in pairs(parent:GetDescendants()) do
-        if obj:IsA("RemoteEvent") then
-            obj.OnClientEvent:Connect(function(...)
-                print("--------------------------------")
-                print("RECEBIDO DO SERVIDOR: " .. obj.Name)
-                print("DADOS: ", ...)
-            end)
+    if remote then
+        print("Remote encontrado: " .. remote.Name)
+        for i = 1, quantidade do
+            -- A estrutura comum é: Remote:FireServer(ItemNome, Quantidade)
+            -- Ou apenas: Remote:FireServer(ItemNome) em loop
+            remote:FireServer(itemNome)
+            task.wait(0.05)
         end
+    else
+        warn("Não foi possível encontrar o Remote automaticamente. Tente abrir a loja antes de rodar.")
     end
 end
 
--- Monitora o ReplicatedStorage (onde 90% dos remotes ficam)
-monitorRemotes(ReplicatedStorage)
-
--- Tenta ganchar a função FireServer de um jeito mais bruto
-local raw;
-raw = hookfunction(Instance.new("RemoteEvent").FireServer, newcclosure(function(self, ...)
-    print("--------------------------------")
-    print("REMOTE ENVIADO (FireServer): " .. self.Name)
-    print("CAMINHO: " .. self:GetFullName())
-    local args = {...}
-    for i, v in pairs(args) do
-        print("ARG [" .. i .. "]:", v)
-    end
-    return raw(self, ...)
-end))
+tentarComprar()

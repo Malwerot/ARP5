@@ -463,7 +463,7 @@ local EstoqueLabel
 InfoTab:Button("Atualizar Valor das Bags 💵", function()
     local grana, total = calcularVendaTotal()
     if LucroLabel then
-        LucroLabel:Set("Lucro em Inventário: " .. grana .. " (" .. total .. " bags)")
+        LucroLabel:Set("Lucro em Inventário: $" .. grana .. " (" .. total .. " bags)")
     end
 end)
 

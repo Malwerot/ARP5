@@ -5,7 +5,7 @@ local localPlayer = Players.LocalPlayer
 
 -- 1. Carregamento da Library (Mesma lógica da sua UI)
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library:CreateLib("Axios Debugger", "DarkTheme")
+local Window = Library.CreateLib("Axios", "BloodTheme")
 local Tab = Window:NewTab("Logger")
 local Section = Tab:NewSection("Monitor de ProximityPrompt")
 

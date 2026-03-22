@@ -1,0 +1,67 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local localPlayer = Players.LocalPlayer
+
+-- 1. Carregamento da Library (Mesma lógica da sua UI)
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Malwerot/test1/refs/heads/main/UUII.lua"))()
+local Window = Library:CreateLib("Axios Debugger", "DarkTheme")
+local Tab = Window:NewTab("Logger")
+local Section = Tab:NewSection("Monitor de ProximityPrompt")
+
+local loggingEnabled = false
+
+--[[ 
+    LÓGICA DO LOGGER
+--]]
+
+-- Esta função detecta quando você interage com QUALQUER coisa no jogo usando o "E"
+ProximityPromptService.PromptTriggered:Connect(function(prompt, player)
+    if player == localPlayer and loggingEnabled then
+        print("------------------------------------------")
+        print("📦 [INTERAÇÃO DETECTADA]")
+        print("🔹 Objeto Pai: " .. prompt.Parent.Name)
+        print("🔹 Nome do Prompt: " .. prompt.Name)
+        print("🔹 Texto do Prompt: " .. prompt.ObjectText .. " | " .. prompt.ActionText)
+        print("🔹 Caminho Completo: " .. prompt:GetFullName())
+        print("------------------------------------------")
+        
+        -- Notificação rápida na tela para você saber que logou
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Log Registrado!",
+            Text = "Verifique o Console (F9)",
+            Duration = 2
+        })
+    end
+end)
+
+--[[ 
+    INTERFACE
+--]]
+
+Section:NewToggle("Ativar Logger (F9)", "Ativa o rastreamento de interações com 'E'", function(state)
+    loggingEnabled = state
+    if state then
+        print(">>> Logger ATIVADO. Vá até a loja e aperte E nos itens.")
+    else
+        print(">>> Logger DESATIVADO.")
+    end
+end)
+
+Section:NewButton("Limpar Console", "Limpa as mensagens do F9", function()
+    -- Truque para "limpar" o console visualmente
+    for i = 1, 50 do print(" ") end
+    print("--- Console Limpo ---")
+end)
+
+Section:NewButton("Checar Itens na Mão", "Loga o nome da Tool que você está segurando", function()
+    local char = localPlayer.Character
+    local tool = char and char:FindFirstChildOfClass("Tool")
+    if tool then
+        print("Segurando agora: " .. tool.Name .. " [Caminho: " .. tool:GetFullName() .. "]")
+    else
+        print("Nenhuma Tool equipada.")
+    end
+end)
+
+print("Market Debugger carregado. Ative o Toggle e use o F9.")

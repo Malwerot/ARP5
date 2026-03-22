@@ -443,9 +443,10 @@ end
 CreateMainGUI()
 
 local FarmTab = CreatePage("AutoFarm", 0)
-local InfoTab = CreatePage("Inventário", 1)
-local ConfigTab = CreatePage("Ajustes", 2)
-local ThemesTab = CreatePage("Temas", 3)
+local CardTab = CreatePage("CardFarm", 1)
+local InfoTab = CreatePage("Inventário", 2)
+local ConfigTab = CreatePage("Ajustes", 3)
+local ThemesTab = CreatePage("Temas", 4)
 
 -- Aba: AutoFarm
 FarmTab:Section("Controle Principal")

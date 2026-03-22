@@ -1,0 +1,116 @@
+-- [[ AXIOS MINI - LAMONT TESTER ]]
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+-- Configurações de Temas Simples (Baseado no seu original)
+local Theme = {
+    Background = Color3.fromRGB(25, 25, 25),
+    Element = Color3.fromRGB(35, 35, 35),
+    Stroke = Color3.fromRGB(50, 50, 50),
+    Text = Color3.fromRGB(240, 240, 240),
+    Accent = Color3.fromRGB(0, 255, 150)
+}
+
+-- [ FUNÇÃO DE INTERAÇÃO COM LAMONT ]
+local function InteractWithLamont(itemName, amount)
+    local npc = Workspace:FindFirstChild("Folders") and Workspace.Folders:FindFirstChild("NPCs") and Workspace.Folders.NPCs:FindFirstChild("Lamont Bell")
+    if npc then
+        local prompt = npc:FindFirstChild("UpperTorso") and npc.UpperTorso:FindFirstChild("ProximityPrompt")
+        if prompt then
+            for i = 1, amount do
+                -- Nota: Esta função dispara a proximidade. 
+                -- Para compra específica, o jogo costuma abrir um menu ou disparar um RemoteEvent.
+                fireproximityprompt(prompt)
+                task.wait(0.1) -- Delay pequeno para não crashar
+            end
+        end
+    end
+end
+
+-- [ INTERFACE GRÁFICA ]
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0, 300, 0, 380)
+Main.Position = UDim2.new(0.5, -150, 0.5, -190)
+Main.BackgroundColor3 = Theme.Background
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "LAMONT BELL - QUICK BUY"
+Title.TextColor3 = Theme.Accent
+Title.BackgroundTransparency = 1
+Title.Font = "GothamBold"
+
+-- Função para criar Input + Label
+local function CreateInput(name, pos)
+    local Label = Instance.new("TextLabel", Main)
+    Label.Size = UDim2.new(0, 120, 0, 30)
+    Label.Position = UDim2.new(0, 20, 0, pos)
+    Label.Text = name .. ":"
+    Label.TextColor3 = Theme.Text
+    Label.BackgroundTransparency = 1
+    Label.TextXAlignment = "Left"
+    Label.Font = "Gotham"
+
+    local Box = Instance.new("TextBox", Main)
+    Box.Size = UDim2.new(0, 100, 0, 30)
+    Box.Position = UDim2.new(0, 160, 0, pos)
+    Box.BackgroundColor3 = Theme.Element
+    Box.Text = "0"
+    Box.TextColor3 = Theme.Text
+    Box.Font = "Gotham"
+    Instance.new("UICorner", Box)
+    
+    return Box
+end
+
+-- Criando os campos
+local waterInput = CreateInput("Water", 60)
+local sugarInput = CreateInput("Sugar Block", 100)
+local bagInput   = CreateInput("Empty Bag", 140)
+local gelInput   = CreateInput("Gelatin", 180)
+
+-- Botão de Execução
+local BuyBtn = Instance.new("TextButton", Main)
+BuyBtn.Size = UDim2.new(0, 260, 0, 45)
+BuyBtn.Position = UDim2.new(0, 20, 0, 240)
+BuyBtn.BackgroundColor3 = Theme.Accent
+BuyBtn.Text = "START BUYING"
+BuyBtn.TextColor3 = Color3.new(0,0,0)
+BuyBtn.Font = "GothamBold"
+Instance.new("UICorner", BuyBtn)
+
+-- Lógica do Botão
+BuyBtn.MouseButton1Click:Connect(function()
+    BuyBtn.Text = "Interacting..."
+    BuyBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    
+    -- Executa as interações baseadas nos números digitados
+    InteractWithLamont("Water", tonumber(waterInput.Text) or 0)
+    InteractWithLamont("Sugar", tonumber(sugarInput.Text) or 0)
+    InteractWithLamont("Bag", tonumber(bagInput.Text) or 0)
+    InteractWithLamont("Gelatin", tonumber(gelInput.Text) or 0)
+    
+    BuyBtn.Text = "DONE!"
+    task.wait(1)
+    BuyBtn.Text = "START BUYING"
+    BuyBtn.BackgroundColor3 = Theme.Accent
+end)
+
+-- Botão Fechar
+local Close = Instance.new("TextButton", Main)
+Close.Size = UDim2.new(0, 30, 0, 30)
+Close.Position = UDim2.new(1, -35, 0, 5)
+Close.Text = "X"
+Close.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+Close.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", Close)
+Close.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+
+-- Arrastar UI
+local dragging, dragStart, startPos
+Main.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; dragStart = i.Position; startPos = Main.Position end end)
+game:GetService("UserInputService").InputChanged:Connect(function(i) if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then local d = i.Position - dragStart; Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y) end end)
+game:GetService("UserInputService").InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)

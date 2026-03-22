@@ -1,24 +1,72 @@
--- [[ TESTADOR DE COMPRA EM MASSA - AXIOS ]]
-local quantidade = 10 -- Mude para quanto você quer comprar
-local itemNome = "Water" -- Nome exato que aparece no botão da imagem
+-- [[ AXIOS SHOP - INSTANT BUYER ]]
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
-local function tentarComprar()
-    -- Procura o Remote de Loja no ReplicatedStorage (lugar mais comum)
-    local remote = game:GetService("ReplicatedStorage"):FindFirstChild("ShopRemote", true) 
-                   or game:GetService("ReplicatedStorage"):FindFirstChild("Purchase", true)
-                   or game:GetService("ReplicatedStorage"):FindFirstChild("BuyItem", true)
-
-    if remote then
-        print("Remote encontrado: " .. remote.Name)
-        for i = 1, quantidade do
-            -- A estrutura comum é: Remote:FireServer(ItemNome, Quantidade)
-            -- Ou apenas: Remote:FireServer(ItemNome) em loop
-            remote:FireServer(itemNome)
-            task.wait(0.05)
+-- Função para comprar clicando na interface
+local function InstantBuy(itemName, amount)
+    if amount <= 0 then return end
+    
+    -- Varre a sua PlayerGui inteira atrás da interface da loja (SHOP)
+    -- O script procura o botão que tem o nome do item que você quer
+    local foundCount = 0
+    for _, obj in pairs(PlayerGui:GetDescendants()) do
+        if obj:IsA("TextButton") and string.find(obj.Text, itemName) then
+            for i = 1, amount do
+                -- Simula o clique exato que o botão espera
+                local events = {"MouseButton1Click", "Activated"}
+                for _, eventName in ipairs(events) do
+                    for _, connection in pairs(getconnections(obj[eventName])) do
+                        connection:Fire()
+                    end
+                end
+                foundCount = foundCount + 1
+                task.wait(0.05) -- Delay seguro para o seu Anticheat não te chutar
+            end
+            break
         end
-    else
-        warn("Não foi possível encontrar o Remote automaticamente. Tente abrir a loja antes de rodar.")
     end
+    return foundCount
 end
 
-tentarComprar()
+-- [ MINI INTERFACE ]
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0, 250, 0, 280)
+Main.Position = UDim2.new(0.5, -125, 0.5, -140)
+Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Instance.new("UICorner", Main)
+
+local function AddInput(label, pos)
+    local l = Instance.new("TextLabel", Main)
+    l.Text = label; l.Position = UDim2.new(0, 20, 0, pos); l.Size = UDim2.new(0, 100, 0, 30)
+    l.TextColor3 = Color3.new(1,1,1); l.BackgroundTransparency = 1; l.TextXAlignment = "Left"
+    
+    local b = Instance.new("TextBox", Main)
+    b.Text = "0"; b.Position = UDim2.new(0, 140, 0, pos); b.Size = UDim2.new(0, 80, 0, 30)
+    b.BackgroundColor3 = Color3.fromRGB(50, 50, 50); b.TextColor3 = Color3.new(0,1,0)
+    Instance.new("UICorner", b)
+    return b
+end
+
+local waterB = AddInput("Water", 50)
+local sugarB = AddInput("Sugar Block", 90)
+local gelB   = AddInput("Gelatin", 130)
+
+local BuyBtn = Instance.new("TextButton", Main)
+BuyBtn.Size = UDim2.new(0, 210, 0, 40)
+BuyBtn.Position = UDim2.new(0, 20, 0, 190)
+BuyBtn.Text = "COMPRAR TUDO"
+BuyBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+Instance.new("UICorner", BuyBtn)
+
+BuyBtn.MouseButton1Click:Connect(function()
+    BuyBtn.Text = "PROCESSANDO..."
+    -- Nomes baseados na imagem da loja que você mandou antes
+    InstantBuy("Water", tonumber(waterB.Text) or 0)
+    InstantBuy("Sugar Block Bag", tonumber(sugarB.Text) or 0)
+    InstantBuy("Gelatin", tonumber(gelB.Text) or 0)
+    BuyBtn.Text = "FINALIZADO!"
+    task.wait(1)
+    BuyBtn.Text = "COMPRAR TUDO"
+end)

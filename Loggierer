@@ -3,12 +3,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local localPlayer = Players.LocalPlayer
 
--- 1. Carregamento da Library (Mesma lógica da sua UI)
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Axios", "BloodTheme")
-local Tab = Window:NewTab("Logger")
-local Section = Tab:NewSection("Monitor de ProximityPrompt")
-
 local loggingEnabled = false
 
 --[[ 
@@ -38,6 +32,12 @@ end)
 --[[ 
     INTERFACE
 --]]
+
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Malwerot/test1/refs/heads/main/UUII.lua"))()
+local Window = Library.CreateLib("Hard Gloves", "DarkTheme")
+
+local Tab = Window:NewTab("Logger")
+local Section = Tab:NewSection("Monitor de ProximityPrompt")
 
 Section:NewToggle("Ativar Logger (F9)", "Ativa o rastreamento de interações com 'E'", function(state)
     loggingEnabled = state

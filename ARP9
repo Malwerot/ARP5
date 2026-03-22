@@ -1,85 +1,80 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Axios Hub - No Anim Edition", "Midnight")
+local Window = Library.CreateLib("Axios Hub - Laboratory Edition", "Midnight")
 
 local Tab = Window:NewTab("Auto Farm")
-local Section = Tab:NewSection("Controle de Animações (Loop)")
+local Section = Tab:NewSection("Controle de Animações & Anchored")
 
 -- [[ VARIÁVEIS DE CONTROLE ]] --
 local antiAnimPotato = false
 local antiAnimBag = false
 local antiAnimBowls = false
+local antiAnchor = false 
 
 -- [[ FUNÇÃO DE LIMPEZA ]] --
-local function StopCharacterAnimations()
+local function CleanPlayerState()
     local char = game.Players.LocalPlayer.Character
-    if char and char:FindFirstChild("Humanoid") then
-        local animator = char.Humanoid:FindFirstChildOfClass("Animator")
+    if not char then return end
+    
+    local humanoid = char:FindFirstChild("Humanoid")
+
+    -- 1. Para as Animações
+    if humanoid then
+        local animator = humanoid:FindFirstChildOfClass("Animator")
         if animator then
             for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-                track:Stop(0) -- Para na hora
+                track:Stop(0)
             end
         end
     end
+
+    -- 2. Destrava o Anchored (Se o Toggle estiver ON)
+    if antiAnchor then
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") and part.Anchored then
+                part.Anchored = false
+            end
+        end
+        -- O pulo é essencial para quebrar o estado de "ocupado" do ProximityPrompt
+        if humanoid then humanoid.Jump = true end
+    end
 end
 
--- [[ LOOPS EM SEGUNDO PLANO (Threads) ]] --
-
--- Loop para Potato Cutter
+-- [[ LOOPS DE MONITORAMENTO ]] --
 task.spawn(function()
     while true do
-        if antiAnimPotato then
-            local path = workspace.Map.Locations["The Laboratory"]["Cutting Boards"]["Potato Cutter"].Model.Union.Attachment.ProximityPrompt
-            -- Se o prompt estiver sendo usado ou se o char estiver animando, a gente limpa
-            StopCharacterAnimations()
-        end
-        task.wait(0.1) -- Checa a cada 100ms para não dar lag
-    end
-end)
-
--- Loop para Plastic Bag
-task.spawn(function()
-    while true do
-        if antiAnimBag then
-            StopCharacterAnimations()
+        if antiAnimPotato or antiAnimBag or antiAnimBowls then
+            CleanPlayerState()
         end
         task.wait(0.1)
     end
 end)
 
--- Loop para Bowls
-task.spawn(function()
-    while true do
-        if antiAnimBowls then
-            StopCharacterAnimations()
-        end
-        task.wait(0.1)
-    end
+-- [[ INTERFACE ]] --
+
+Section:NewToggle("Anti-Anchor (Desgrudar)", "Impede que o jogo te prenda no chão", function(state)
+    antiAnchor = state
 end)
 
--- [[ INTERFACE COM TOGGLES ]] --
-
-Section:NewToggle("No-Anim: Potato Cutter", "Cancela animação de cortar batatas continuamente", function(state)
+Section:NewToggle("No-Anim: Potato Cutter", "Cancela animação das Batatas", function(state)
     antiAnimPotato = state
-    if state then print("Anti-Anim Potato: ATIVADO") else print("Anti-Anim Potato: DESATIVADO") end
 end)
 
-Section:NewToggle("No-Anim: Plastic Bag", "Cancela animação da sacola continuamente", function(state)
+Section:NewToggle("No-Anim: Plastic Bag", "Cancela animação da Sacola", function(state)
     antiAnimBag = state
 end)
 
-Section:NewToggle("No-Anim: Bowls", "Cancela animação das tigelas continuamente", function(state)
+Section:NewToggle("No-Anim: Bowls", "Cancela animação das Tigelas", function(state)
     antiAnimBowls = state
 end)
 
--- Aba de utilitários
 local Utils = Window:NewTab("Utils")
 local uSec = Utils:NewSection("Ações Rápidas")
 
-uSec:NewButton("Interagir + Cortar Animação (Potato)", "Aperta E e cancela", function()
-    local path = workspace.Map.Locations["The Laboratory"]["Cutting Boards"]["Potato Cutter"].Model.Union.Attachment.ProximityPrompt
-    fireproximityprompt(path)
-    task.wait(0.05)
-    StopCharacterAnimations()
+uSec:NewButton("Forçar Desbloqueio", "Corta anim e desancora agora", function()
+    local oldAnchor = antiAnchor
+    antiAnchor = true
+    CleanPlayerState()
+    antiAnchor = oldAnchor
 end)
 
-print("Axios Hub Toggles carregado!")
+print("Axios Hub v3.1 - Limpo!")

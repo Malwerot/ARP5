@@ -1,116 +1,115 @@
--- [[ AXIOS MINI - LAMONT TESTER ]]
+-- [[ AXIOS MINI - LAMONT SHOP AUTO-BUY ]]
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Configurações de Temas Simples (Baseado no seu original)
+-- Configurações de Aparência
 local Theme = {
-    Background = Color3.fromRGB(25, 25, 25),
-    Element = Color3.fromRGB(35, 35, 35),
-    Stroke = Color3.fromRGB(50, 50, 50),
-    Text = Color3.fromRGB(240, 240, 240),
-    Accent = Color3.fromRGB(0, 255, 150)
+    Background = Color3.fromRGB(20, 20, 20),
+    Element = Color3.fromRGB(40, 40, 40),
+    Accent = Color3.fromRGB(0, 255, 150),
+    Text = Color3.fromRGB(255, 255, 255)
 }
 
--- [ FUNÇÃO DE INTERAÇÃO COM LAMONT ]
-local function InteractWithLamont(itemName, amount)
-    local npc = Workspace:FindFirstChild("Folders") and Workspace.Folders:FindFirstChild("NPCs") and Workspace.Folders.NPCs:FindFirstChild("Lamont Bell")
-    if npc then
-        local prompt = npc:FindFirstChild("UpperTorso") and npc.UpperTorso:FindFirstChild("ProximityPrompt")
-        if prompt then
-            for i = 1, amount do
-                -- Nota: Esta função dispara a proximidade. 
-                -- Para compra específica, o jogo costuma abrir um menu ou disparar um RemoteEvent.
-                fireproximityprompt(prompt)
-                task.wait(0.1) -- Delay pequeno para não crashar
+-- [ FUNÇÃO PARA CLICAR NOS BOTÕES DA LOJA ]
+-- Esta função procura os botões da loja do Lamont na sua tela
+local function BuyFromShop(itemName, amount)
+    if amount <= 0 then return end
+    
+    -- Tenta encontrar a interface da loja do jogo (o nome pode variar, geralmente é 'Shop' ou 'Main')
+    -- Procuramos por um botão que tenha o texto do item conforme a imagem
+    local shopFrame = PlayerGui:FindFirstChild("Shop", true) or PlayerGui:FindFirstChild("Main", true)
+    
+    if shopFrame then
+        for i = 1, amount do
+            for _, btn in pairs(shopFrame:GetDescendants()) do
+                if btn:IsA("TextButton") and string.find(btn.Text, itemName) then
+                    -- Simula o clique no botão da loja do jogo
+                    local events = {"MouseButton1Click", "MouseButton1Down", "Activated"}
+                    for _, event in ipairs(events) do
+                        if btn[event] then
+                            for _, connection in pairs(getconnections(btn[event])) do
+                                connection:Fire()
+                            end
+                        end
+                    end
+                    task.wait(0.1) -- Delay para não dar lag na compra
+                    break 
+                end
             end
         end
     end
 end
 
--- [ INTERFACE GRÁFICA ]
+-- [ INTERFACE DO SCRIPT ]
 local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
 local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 300, 0, 380)
-Main.Position = UDim2.new(0.5, -150, 0.5, -190)
+Main.Size = UDim2.new(0, 280, 0, 320)
+Main.Position = UDim2.new(0.5, -140, 0.5, -160)
 Main.BackgroundColor3 = Theme.Background
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+Main.BorderSizePixel = 0
+Instance.new("UICorner", Main)
 
 local Title = Instance.new("TextLabel", Main)
 Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Text = "LAMONT BELL - QUICK BUY"
+Title.Text = "LAMONT BUYER"
 Title.TextColor3 = Theme.Accent
 Title.BackgroundTransparency = 1
 Title.Font = "GothamBold"
+Title.TextSize = 16
 
--- Função para criar Input + Label
 local function CreateInput(name, pos)
     local Label = Instance.new("TextLabel", Main)
-    Label.Size = UDim2.new(0, 120, 0, 30)
+    Label.Size = UDim2.new(0, 150, 0, 30)
     Label.Position = UDim2.new(0, 20, 0, pos)
-    Label.Text = name .. ":"
+    Label.Text = name
     Label.TextColor3 = Theme.Text
     Label.BackgroundTransparency = 1
     Label.TextXAlignment = "Left"
     Label.Font = "Gotham"
 
     local Box = Instance.new("TextBox", Main)
-    Box.Size = UDim2.new(0, 100, 0, 30)
-    Box.Position = UDim2.new(0, 160, 0, pos)
+    Box.Size = UDim2.new(0, 70, 0, 25)
+    Box.Position = UDim2.new(1, -90, 0, pos + 2)
     Box.BackgroundColor3 = Theme.Element
     Box.Text = "0"
-    Box.TextColor3 = Theme.Text
-    Box.Font = "Gotham"
+    Box.TextColor3 = Theme.Accent
+    Box.Font = "GothamBold"
     Instance.new("UICorner", Box)
-    
     return Box
 end
 
--- Criando os campos
-local waterInput = CreateInput("Water", 60)
-local sugarInput = CreateInput("Sugar Block", 100)
-local bagInput   = CreateInput("Empty Bag", 140)
-local gelInput   = CreateInput("Gelatin", 180)
+local gelInput = CreateInput("Gelatin", 60)
+local sugarInput = CreateInput("Sugar Block Bag", 100)
+local waterInput = CreateInput("Water", 140)
 
--- Botão de Execução
 local BuyBtn = Instance.new("TextButton", Main)
-BuyBtn.Size = UDim2.new(0, 260, 0, 45)
-BuyBtn.Position = UDim2.new(0, 20, 0, 240)
+BuyBtn.Size = UDim2.new(1, -40, 0, 40)
+BuyBtn.Position = UDim2.new(0, 20, 0, 200)
 BuyBtn.BackgroundColor3 = Theme.Accent
-BuyBtn.Text = "START BUYING"
+BuyBtn.Text = "COMPRAR TUDO AGORA"
 BuyBtn.TextColor3 = Color3.new(0,0,0)
 BuyBtn.Font = "GothamBold"
 Instance.new("UICorner", BuyBtn)
 
--- Lógica do Botão
 BuyBtn.MouseButton1Click:Connect(function()
-    BuyBtn.Text = "Interacting..."
-    BuyBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    BuyBtn.Text = "COMPRANDO..."
     
-    -- Executa as interações baseadas nos números digitados
-    InteractWithLamont("Water", tonumber(waterInput.Text) or 0)
-    InteractWithLamont("Sugar", tonumber(sugarInput.Text) or 0)
-    InteractWithLamont("Bag", tonumber(bagInput.Text) or 0)
-    InteractWithLamont("Gelatin", tonumber(gelInput.Text) or 0)
+    -- Executa as compras baseado na imagem que você mandou
+    BuyFromShop("Gelatin", tonumber(gelInput.Text) or 0)
+    BuyFromShop("Sugar Block Bag", tonumber(sugarInput.Text) or 0)
+    BuyFromShop("Water", tonumber(waterInput.Text) or 0)
     
-    BuyBtn.Text = "DONE!"
-    task.wait(1)
-    BuyBtn.Text = "START BUYING"
-    BuyBtn.BackgroundColor3 = Theme.Accent
+    BuyBtn.Text = "COMPRA FINALIZADA!"
+    task.wait(1.5)
+    BuyBtn.Text = "COMPRAR TUDO AGORA"
 end)
 
--- Botão Fechar
+-- Botão para fechar o script
 local Close = Instance.new("TextButton", Main)
-Close.Size = UDim2.new(0, 30, 0, 30)
-Close.Position = UDim2.new(1, -35, 0, 5)
+Close.Size = UDim2.new(0, 20, 0, 20)
+Close.Position = UDim2.new(1, -25, 0, 5)
 Close.Text = "X"
-Close.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-Close.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", Close)
+Close.TextColor3 = Color3.new(1,0,0)
+Close.BackgroundTransparency = 1
 Close.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
-
--- Arrastar UI
-local dragging, dragStart, startPos
-Main.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; dragStart = i.Position; startPos = Main.Position end end)
-game:GetService("UserInputService").InputChanged:Connect(function(i) if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then local d = i.Position - dragStart; Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y) end end)
-game:GetService("UserInputService").InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)

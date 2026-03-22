@@ -1,7 +1,7 @@
 -- [[ AXIOS HUB V2.1 - DEFINITIVE EDITION ]] --
 local KeySystem = {
     Enabled = true,
-    Key = "AXIOS-123", -- Change this to your desired key
+    Key = "BLOODHOUND ON TOP!", -- Change this to your desired key
     Status = false
 }
 
@@ -24,8 +24,8 @@ local function OpenKeySystem()
     Submit.Size = UDim2.new(0, 100, 0, 30)
     Submit.Position = UDim2.new(0.5, -50, 0.7, 0)
     Submit.Text = "Submit"
-    Submit.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    Submit.TextColor3 = Color3.new(1,1,1)
+    Submit.BackgroundColor3 = Color3.fromRGB(211, 211, 211)
+    Submit.TextColor3 = Color3.new(255, 255, 255)
 
     Submit.MouseButton1Click:Connect(function()
         if TextBox.Text == KeySystem.Key then

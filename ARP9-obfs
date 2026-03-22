@@ -14,7 +14,7 @@ local function OpenKeySystem()
     -- Basic Styling (You can style this to match your Axios theme)
     Main.Size = UDim2.new(0, 300, 0, 150)
     Main.Position = UDim2.new(0.5, -150, 0.5, -75)
-    Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    Main.BackgroundColor3 = Color3.fromRGB(64,64,64)
     
     TextBox.Size = UDim2.new(0, 200, 0, 40)
     TextBox.Position = UDim2.new(0.5, -100, 0.3, 0)
@@ -24,7 +24,7 @@ local function OpenKeySystem()
     Submit.Size = UDim2.new(0, 100, 0, 30)
     Submit.Position = UDim2.new(0.5, -50, 0.7, 0)
     Submit.Text = "Submit"
-    Submit.BackgroundColor3 = Color3.fromRGB(211, 211, 211)
+    Submit.BackgroundColor3 = Color3.fromRGB(64,64,64)
     Submit.TextColor3 = Color3.new(255, 255, 255)
 
     Submit.MouseButton1Click:Connect(function()

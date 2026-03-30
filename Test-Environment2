@@ -57,15 +57,14 @@ end
 ----------------------------------------------------------------
 -- [ CARREGAMENTO DE MÓDULOS EXTERNOS ]
 ----------------------------------------------------------------
--- Carrega o Sense ESP
-local Sense = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Sirius/request/library/sense/source.lua'))()
-Sense.teamSettings.showFriendly = false -- Não mostra seu próprio time por padrão
+local function StartAxiosHub()
+    -- Carregamento de Módulos Externos
+    local Sense = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Sirius/request/library/sense/source.lua'))()
+    Sense.teamSettings.showFriendly = false
 
--- Carrega o LimbExtender (Hitbox)
-getgenv().le = getgenv().le or loadstring(game:HttpGet('https://raw.githubusercontent.com/AAPVdev/scripts/refs/heads/main/LimbExtender.lua'))()
-local LimbExtender = getgenv().le
-local le = LimbExtender({ LISTEN_FOR_INPUT = false, USE_HIGHLIGHT = false })
-
+    getgenv().le = getgenv().le or loadstring(game:HttpGet('https://raw.githubusercontent.com/AAPVdev/scripts/refs/heads/main/LimbExtender.lua'))()
+    local LimbExtender = getgenv().le
+    local le = LimbExtender({ LISTEN_FOR_INPUT = false, USE_HIGHLIGHT = false })
 ----------------------------------------------------------------
 -- [ REST OF YOUR SCRIPT STARTS HERE ]
 ----------------------------------------------------------------

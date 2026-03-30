@@ -1,26 +1,29 @@
--- Headsize-All Otimizado (Sem Crash ao Atirar)
+-- MortyHub: Headsize-All (Anti-Crash Version)
 
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
-
 local enabled = false
 local currentSize = 9
 local originalSizes = {}
 
--- GUI
+-- --- INTERFACE GUI ---
 local gui = Instance.new("ScreenGui", localPlayer:WaitForChild("PlayerGui"))
 gui.ResetOnSpawn = false
 
 local btn = Instance.new("TextButton", gui)
-btn.Size = UDim2.new(0, 120, 0, 40)
+btn.Size = UDim2.new(0, 150, 0, 45)
 btn.Position = UDim2.new(0.8, 0, 0.1, 0)
-btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+btn.TextColor3 = Color3.new(1, 1, 1)
 btn.Text = "MortyHub: OFF"
-btn.TextColor3 = Color3.new(1,1,1)
 btn.Font = Enum.Font.SourceSansBold
 btn.TextScaled = true
 
--- Função principal para aplicar o tamanho com segurança
+local corner = Instance.new("UICorner", btn)
+corner.CornerRadius = UDim.new(0, 10)
+
+-- --- LÓGICA PRINCIPAL ---
+
 local function applyHeadsize(player)
     if not enabled or player == localPlayer then return end
     
@@ -28,26 +31,29 @@ local function applyHeadsize(player)
     if char then
         local head = char:FindFirstChild("Head")
         if head and head:IsA("BasePart") then
-            -- Salva o tamanho original uma única vez
+            -- Salva o tamanho original apenas uma vez
             if not originalSizes[player] then
                 originalSizes[player] = head.Size
             end
 
-            -- Aplica as mudanças
-            head.Size = Vector3.new(currentSize, currentSize, currentSize)
-            head.CanCollide = false
-            head.Massless = true
+            -- AJUSTES ANTI-CRASH:
+            -- Mantemos CanTouch/CanQuery para a bala detectar a cabeça,
+            -- mas desligamos CanCollide para a cabeça não bater no cenário.
+            head.CanCollide = false 
+            head.CanTouch = true    
+            head.CanQuery = true    
+            head.Massless = true    
             
-            -- Remove o valor que o Roblox usa para "corrigir" o tamanho automaticamente
-            local originalSizeValue = head:FindFirstChild("OriginalSize")
-            if originalSizeValue then
-                originalSizeValue:Destroy()
-            end
+            -- Aplica o tamanho gigante
+            head.Size = Vector3.new(currentSize, currentSize, currentSize)
+            
+            -- Remove travas de redimensionamento do Roblox
+            local oSize = head:FindFirstChild("OriginalSize")
+            if oSize then oSize:Destroy() end
         end
     end
 end
 
--- Função para resetar
 local function resetHeadsize(player)
     local char = player.Character
     if char then
@@ -60,37 +66,57 @@ local function resetHeadsize(player)
     end
 end
 
--- Conectar eventos de spawn (ESSENCIAL PARA NÃO PRECISAR DE LOOP)
+-- --- GESTÃO DE PLAYERS ---
+
 local function onCharacterAdded(player)
     player.CharacterAdded:Connect(function()
-        task.wait(0.5) -- Espera o personagem carregar os assets
+        task.wait(0.5) -- Espera o personagem carregar os componentes
         if enabled then
             applyHeadsize(player)
         end
     end)
 end
 
--- Inicializa jogadores atuais e futuros
+-- Configura jogadores atuais e futuros
 for _, p in pairs(Players:GetPlayers()) do
     onCharacterAdded(p)
+    if p.Character then applyHeadsize(p) end
 end
+
 Players.PlayerAdded:Connect(onCharacterAdded)
 
--- Lógica do Botão
+-- --- BOTÃO TOGGLE ---
+
 btn.MouseButton1Click:Connect(function()
     enabled = not enabled
     if enabled then
         btn.Text = "MortyHub: ON"
-        btn.BackgroundColor3 = Color3.fromRGB(0, 200, 50)
-        -- Aplica em todo mundo que já está no mapa
+        btn.BackgroundColor3 = Color3.fromRGB(0, 180, 50)
+        -- Aplica em todos imediatamente
         for _, p in pairs(Players:GetPlayers()) do
             applyHeadsize(p)
         end
     else
         btn.Text = "MortyHub: OFF"
-        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        -- Reseta todos imediatamente
         for _, p in pairs(Players:GetPlayers()) do
             resetHeadsize(p)
+        end
+    end
+end)
+
+-- --- LOOP DE VERIFICAÇÃO (OPCIONAL/SEGURO) ---
+-- Em vez de RenderStepped, verificamos a cada 2 segundos se alguém resetou
+task.spawn(function()
+    while true do
+        task.wait(2)
+        if enabled then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= localPlayer then
+                    applyHeadsize(p)
+                end
+            end
         end
     end
 end)

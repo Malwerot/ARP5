@@ -251,7 +251,9 @@ function Actions.ExecutarReceita()
         
         pcall(function()
             local prompt = targetPot:FindFirstChild("Attachment") and targetPot.Attachment:FindFirstChild("ProximityPrompt")
-            if prompt then fireproximityprompt(prompt) end
+            if prompt then
+                prompt.MaxActivationDistance = 9999  --sniper do farm ksks
+                fireproximityprompt(prompt) end
         end)
 
         task.wait(item.cooldown + (math.random(15, 42) / 10))

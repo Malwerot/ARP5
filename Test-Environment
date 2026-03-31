@@ -197,7 +197,7 @@ local function findNearestPot()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
     local myPos = char.HumanoidRootPart.Position
-    local closest, shortestDist = nil, 35 
+    local closest, shortestDist = nil, 75 
 
     local locs = {
         Workspace:FindFirstChild("Map") and Workspace.Map:FindFirstChild("Houses") and Workspace.Map.Houses:FindFirstChild("WH1") and Workspace.Map.Houses.WH1:FindFirstChild("Interior"),

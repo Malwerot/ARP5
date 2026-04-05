@@ -200,7 +200,7 @@ local function findNearestPot()
     local closest, shortestDist = nil, 75 
 
     local locs = {
-        Workspace:FindFirstChild("Map") and Workspace.Map:FindFirstChild("Houses") and Workspace.Map.Houses:FindFirstChild("WH1") and Workspace.Map.Houses.WH1:FindFirstChild("Interior"),
+        Workspace.Map.Houses:FindFirstChild("WH1") and Workspace.Map.Houses.WH1:FindFirstChild("Interior"),
         Workspace:FindFirstChild("Map") and Workspace.Map:FindFirstChild("Locations") and Workspace.Map.Locations:FindFirstChild("Apartments") and Workspace.Map.Locations.Apartments:FindFirstChild("Home 1"),
         Workspace.Map.Locations.Apartments:FindFirstChild("Home 2"),
         Workspace.Map.Locations.Apartments:FindFirstChild("Home 3"),

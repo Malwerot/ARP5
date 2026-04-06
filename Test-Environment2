@@ -409,7 +409,7 @@ local function CreatePage(name, pos)
     b.TextColor3 = Themes.Default.TextColor
     b.Font = "GothamBold"
     b.TextSize = 12
-    b.AutoButtonColor = false -- Desativa o padrão para usarmos o nosso customizado
+    b.AutoButtonColor = false
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
 
     local s = Instance.new("UIStroke", b)
@@ -417,18 +417,25 @@ local function CreatePage(name, pos)
     s.Thickness = 1
     s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-    -- Efeito de Hover (Ideia 4)
+    -- Função para facilitar o Tween e evitar conflitos
+    local function tween(obj, prop, goal)
+        game:GetService("TweenService"):Create(obj, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), goal):Play()
+    end
+
+    -- Efeito de Hover Blindado
     b.MouseEnter:Connect(function()
-        game:GetService("TweenService"):Create(b, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
-        game:GetService("TweenService"):Create(s, TweenInfo.new(0.3), {Thickness = 2}):Play()
+        tween(b, "BackgroundColor3", {BackgroundColor3 = Color3.fromRGB(55, 55, 55)})
+        tween(s, "Thickness", {Thickness = 2})
     end)
+
     b.MouseLeave:Connect(function()
-        game:GetService("TweenService"):Create(b, TweenInfo.new(0.3), {BackgroundColor3 = Themes.Default.ElementBackground}):Play()
-        game:GetService("TweenService"):Create(s, TweenInfo.new(0.3), {Thickness = 1}):Play()
+        -- Quando o mouse sai, voltamos para a cor do tema atual (usando a cor de fundo do MainFrame como referência ou a padrão)
+        tween(b, "BackgroundColor3", {BackgroundColor3 = Themes.Default.ElementBackground})
+        tween(s, "Thickness", {Thickness = 1})
     end)
 
     if cb then b.MouseButton1Click:Connect(function() 
-        -- Feedback de clique
+        -- Feedback de clique rápido
         b.TextSize = 10
         task.wait(0.1)
         b.TextSize = 12

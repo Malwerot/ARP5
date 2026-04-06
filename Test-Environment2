@@ -10,8 +10,12 @@ local url = "https://raw.githubusercontent.com/Malwerot/test1/refs/heads/main/Ke
 local code = game:HttpGet(url)
 
 -- Executa o conteúdo do arquivo (que retorna a tabela KeyConfig)
-local KeyConfig = loadstring(code)()
-KeySystem.Key = KeyConfig.RemoteKey
+if success then
+    local KeyConfig = loadstring(code)()
+    KeySystem.Key = KeyConfig.RemoteKey
+else
+    warn("Falha ao carregar Key do servidor.")
+end
 
 local function OpenKeySystem()
     local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))

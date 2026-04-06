@@ -80,7 +80,6 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
-local VIM = game:GetService("VirtualInputManager")
 
 ----------------------------------------------------------------
 -- [ 1. CONFIGURAÇÕES E DADOS GERAIS ]
@@ -265,6 +264,7 @@ end
 -- [ 4. MOTOR DA INTERFACE (UI ENGINE) ]
 ----------------------------------------------------------------
 local function CreateMainGUI()
+    local targetParent = (gethui and gethui()) or (syn and syn.protect_gui and game:GetService("CoreGui")) or game:GetService("CoreGui")
     local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
     gui.Name = "AxiosSystem_V2"
     gui.ResetOnSpawn = false
@@ -674,16 +674,29 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Loop do Auto-F
 task.spawn(function()
     while true do
         if autoF_Enabled and shiftPressed then
-            -- Simula o pressionamento da tecla F
-            VIM:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-            task.wait(0.05)
-            VIM:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+            pcall(function()
+                local char = LocalPlayer.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if root then
+                    -- Busca o prompt mais próximo num raio de 12 studs
+                    for _, v in ipairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") then
+                            local part = v.Parent
+                            if part and part:IsA("BasePart") then
+                                local dist = (part.Position - root.Position).Magnitude
+                                if dist <= 12 then
+                                    fireproximityprompt(v) -- Método nativo do executor
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
         end
-        task.wait(0.5) -- Espera 0.5 msegundos para repetir
+        task.wait(0.15) -- Delay "humano" para evitar ban por spam de eventos
     end
 end)
 

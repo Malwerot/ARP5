@@ -73,10 +73,8 @@ task.spawn(function()
             VIM:SendKeyEvent(true, Enum.KeyCode.F, false, game)
             task.wait(0.05)
             VIM:SendKeyEvent(false, Enum.KeyCode.F, false, game)
-            
-            print("Auto-F executado com sucesso!")
         end
-        task.wait(1) -- Intervalo de 1 segundo
+        task.wait(0.5) -- Intervalo de 0.5 segundos
     end
 end)
 

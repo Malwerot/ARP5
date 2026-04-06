@@ -91,6 +91,7 @@ local shortcutKey = Enum.KeyCode.RightShift
 local isSettingKey = false
 local autoF_Enabled = false
 local shiftPressed = false
+local CurrentThemeName = "Default" -- Rastreador de tema ativo
 
 local Themes = {
   Default = { Background = Color3.fromRGB(25, 25, 25), Topbar = Color3.fromRGB(34, 34, 34), ElementBackground = Color3.fromRGB(35, 35, 35), ElementStroke = Color3.fromRGB(50, 50, 50), TextColor = Color3.fromRGB(240, 240, 240) },
@@ -157,8 +158,11 @@ local function calcularVendaTotal()
     return totalDinheiro, quantidadeTotal
 end
 
-local function ModifyTheme(theme)
-    if not MainFrame then return end
+local function ModifyTheme(themeName)
+    local theme = Themes[themeName]
+    if not theme or not MainFrame then return end
+    CurrentThemeName = themeName
+
     local TS = game:GetService("TweenService")
     local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quint)
 
@@ -404,40 +408,49 @@ local function CreatePage(name, pos)
     local b = Instance.new("TextButton", p)
     b.LayoutOrder = currentOrder
     b.Size = UDim2.new(1, -10, 0, 38)
-    b.BackgroundColor3 = Themes.Default.ElementBackground
+    b.BackgroundColor3 = Themes[CurrentThemeName].ElementBackground -- Usa o tema atual
     b.Text = n
-    b.TextColor3 = Themes.Default.TextColor
+    b.TextColor3 = Themes[CurrentThemeName].TextColor
     b.Font = "GothamBold"
     b.TextSize = 12
     b.AutoButtonColor = false
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
 
     local s = Instance.new("UIStroke", b)
-    s.Color = Themes.Default.ElementStroke
+    s.Color = Themes[CurrentThemeName].ElementStroke
     s.Thickness = 1
     s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-    -- Função para facilitar o Tween e evitar conflitos
-    local function tween(obj, prop, goal)
-        game:GetService("TweenService"):Create(obj, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), goal):Play()
-    end
+    local TS = game:GetService("TweenService")
+    local ti = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tweenIn, tweenOut
 
-    -- Efeito de Hover Blindado
     b.MouseEnter:Connect(function()
-        tween(b, "BackgroundColor3", {BackgroundColor3 = Color3.fromRGB(55, 55, 55)})
-        tween(s, "Thickness", {Thickness = 2})
+        if tweenOut then tweenOut:Cancel() end
+        -- Brilho dinâmico: um pouco mais claro que o fundo atual
+        tweenIn = TS:Create(b, ti, {BackgroundColor3 = Color3.fromRGB(70, 70, 70)})
+        TS:Create(s, ti, {Thickness = 2}):Play()
+        tweenIn:Play()
     end)
 
     b.MouseLeave:Connect(function()
-        -- Quando o mouse sai, voltamos para a cor do tema atual (usando a cor de fundo do MainFrame como referência ou a padrão)
-        tween(b, "BackgroundColor3", {BackgroundColor3 = Themes.Default.ElementBackground})
-        tween(s, "Thickness", {Thickness = 1})
+        if tweenIn then tweenIn:Cancel() end
+        -- BUSCA A COR DO TEMA QUE ESTÁ ATIVO NO MOMENTO
+        local activeTheme = Themes[CurrentThemeName]
+        tweenOut = TS:Create(b, ti, {
+            BackgroundColor3 = activeTheme.ElementBackground,
+            TextColor3 = activeTheme.TextColor
+        })
+        TS:Create(s, ti, {
+            Thickness = 1, 
+            Color = activeTheme.ElementStroke
+        }):Play()
+        tweenOut:Play()
     end)
 
     if cb then b.MouseButton1Click:Connect(function() 
-        -- Feedback de clique rápido
         b.TextSize = 10
-        task.wait(0.1)
+        task.wait(0.05)
         b.TextSize = 12
         cb(b) 
     end) end
@@ -679,7 +692,7 @@ ThemesTab:Section("Aparência do HUB")
 -- Aqui usei o seu Dropdown com a lista de nomes que você já tinha
 ThemesTab:Dropdown("Tema Atual", {"Default", "AmberGlow", "Amethyst", "Ocean", "BloodTheme", "Light", "Green", "Bloom", "DarkBlue", "Serenity"}, function(selected)
     if Themes[selected] then 
-        ModifyTheme(Themes[selected]) 
+        ModifyTheme(selected) 
     end
 end)
 

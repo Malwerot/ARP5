@@ -1,1 +1,44 @@
--- [[ AXIOS HUB V2.1 - DEFINITIVE EDITION ]]
+
+-- [ VARIÁVEIS DE CONTROLE ]
+local autoF_Enabled = false
+local shiftPressionado = false
+
+-- Função do Toggle
+ToggleBtn.MouseButton1Click:Connect(function()
+    autoF_Enabled = not autoF_Enabled
+    if autoF_Enabled then
+        ToggleBtn.Text = "STATUS: ON"
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100) -- Verde
+    else
+        ToggleBtn.Text = "STATUS: OFF"
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0) -- Vermelho
+    end
+end)
+
+-- [ DETECÇÃO DE SHIFT ]
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
+        shiftPressionado = true
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
+        shiftPressionado = false
+    end
+end)
+
+-- [ LOOP DE EXECUÇÃO ]
+task.spawn(function()
+    while true do
+        -- Só aperta F se o Toggle estiver ON E o Shift estiver segurado
+        if autoF_Enabled and shiftPressionado then
+            -- Simula o pressionamento
+            VIM:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+            task.wait(0.05)
+            VIM:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+        end
+        task.wait(0.5) -- Intervalo de 0.5 segundos
+    end
+end)

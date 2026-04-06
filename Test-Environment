@@ -61,6 +61,7 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
+local VIM = game:GetService("VirtualInputManager")
 
 ----------------------------------------------------------------
 -- [ 1. CONFIGURAÇÕES E DADOS GERAIS ]
@@ -69,6 +70,8 @@ local isFarming = false
 local targetPot = nil
 local shortcutKey = Enum.KeyCode.RightShift
 local isSettingKey = false
+local autoF_Enabled = false
+local shiftPressed = false
 
 local Themes = {
   Default = { Background = Color3.fromRGB(25, 25, 25), Topbar = Color3.fromRGB(34, 34, 34), ElementBackground = Color3.fromRGB(35, 35, 35), ElementStroke = Color3.fromRGB(50, 50, 50), TextColor = Color3.fromRGB(240, 240, 240) },
@@ -392,6 +395,51 @@ local function CreatePage(name, pos)
         end)
     end
 
+  function el:AnimatedToggle(n, cb)
+    currentOrder = currentOrder + 1
+    local bg = Instance.new("Frame", p)
+    bg.LayoutOrder = currentOrder
+    bg.Size = UDim2.new(1, -10, 0, 40)
+    bg.BackgroundColor3 = Themes.Default.ElementBackground
+    Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 6)
+    
+    local label = Instance.new("TextLabel", bg)
+    label.Size = UDim2.new(0.6, 0, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.Text = n
+    label.TextColor3 = Themes.Default.TextColor
+    label.Font = "GothamBold"
+    label.TextSize = 12
+    label.TextXAlignment = "Left"
+    label.BackgroundTransparency = 1
+
+    local switchBase = Instance.new("TextButton", bg)
+    switchBase.Size = UDim2.new(0, 45, 0, 22)
+    switchBase.Position = UDim2.new(1, -55, 0.5, -11)
+    switchBase.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    switchBase.Text = ""
+    Instance.new("UICorner", switchBase).CornerRadius = UDim.new(1, 0)
+
+    local circle = Instance.new("Frame", switchBase)
+    circle.Size = UDim2.new(0, 18, 0, 18)
+    circle.Position = UDim2.new(0, 2, 0.5, -9)
+    circle.BackgroundColor3 = Color3.new(1, 1, 1)
+    Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
+
+    local active = false
+    switchBase.MouseButton1Click:Connect(function()
+        active = not active
+        local targetPos = active and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
+        local targetColor = active and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(60, 60, 60)
+
+        -- Animação suave
+        game:GetService("TweenService"):Create(circle, TweenInfo.new(0.2), {Position = targetPos}):Play()
+        game:GetService("TweenService"):Create(switchBase, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
+        
+        cb(active)
+    end)
+end
+
     function el:Label(t)
         currentOrder = currentOrder + 1
         local l = Instance.new("TextLabel", p)
@@ -516,6 +564,39 @@ ConfigTab:Button("Mudar Atalho (Atual: RShift)", function(btnObj)
             connection:Disconnect()
         end
     end)
+end)
+
+-- Novo Toggle Animado para o F
+ConfigTab:Section("Utilitários")
+ConfigTab:AnimatedToggle("Auto-F (Hold Shift)", function(v) 
+    autoF_Enabled = v 
+end)
+
+-- Detecção do Shift (LShift ou RShift)
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
+        shiftPressed = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
+        shiftPressed = false
+    end
+end)
+
+-- Loop do Auto-F
+task.spawn(function()
+    while true do
+        if autoF_Enabled and shiftPressed then
+            -- Simula o pressionamento da tecla F
+            VIM:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+            task.wait(0.05)
+            VIM:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+        end
+        task.wait(0.5) -- Espera 0.5 msegundos para repetir
+    end
 end)
 
 -- Aba: Temas

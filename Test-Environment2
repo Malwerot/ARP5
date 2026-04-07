@@ -166,29 +166,50 @@ local function ModifyTheme(themeName)
     local TS = game:GetService("TweenService")
     local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quint)
 
+    -- 1. Fundo Principal e Barra Lateral
     TS:Create(MainFrame, ti, {BackgroundColor3 = theme.Background}):Play()
     if SideBar then TS:Create(SideBar, ti, {BackgroundColor3 = theme.Topbar}):Play() end
+    
+    -- 2. Atualiza os contornos principais (Neon/Bordas)
+    if Stroke then TS:Create(Stroke, ti, {Color = theme.ElementStroke}):Play() end
+    if InnerGlow then TS:Create(InnerGlow, ti, {Color = theme.ElementStroke}):Play() end
 
-    for _, child in ipairs(MainFrame:GetChildren()) do
-        if child:IsA("UIStroke") then
-            TS:Create(child, ti, {Color = theme.ElementStroke}):Play()
-        end
-    end
-
+    -- 3. Varredura de todos os elementos filhos
     for _, obj in ipairs(MainFrame:GetDescendants()) do
         pcall(function()
+            -- Botões de Aba (na SideBar) e Botões de Ação
             if obj:IsA("TextButton") and obj.Name ~= "CloseBtn" then
-                TS:Create(obj, ti, {BackgroundColor3 = theme.ElementBackground, TextColor3 = theme.TextColor}):Play()
+                TS:Create(obj, ti, {
+                    BackgroundColor3 = theme.ElementBackground, 
+                    TextColor3 = theme.TextColor
+                }):Play()
+                
                 local bStroke = obj:FindFirstChildOfClass("UIStroke")
-                if bStroke then TS:Create(bStroke, ti, {Color = theme.ElementStroke}):Play() end
+                if bStroke then 
+                    TS:Create(bStroke, ti, {Color = theme.ElementStroke}):Play() 
+                end
+
+            -- Textos e Títulos
             elseif obj:IsA("TextLabel") then
-                TS:Create(obj, ti, {TextColor3 = theme.TextColor}):Play()
-                if string.find(obj.Text, "——") then TS:Create(obj, ti, {TextColor3 = theme.ElementStroke}):Play() end
+                -- Se for o Título Principal, mantemos branco ou cor de destaque
+                if obj.Text == "AXIOS // HUB" then
+                    TS:Create(obj, ti, {TextColor3 = (themeName == "Light" or themeName == "Green") and Color3.fromRGB(20,20,20) or Color3.new(1,1,1)}):Play()
+                else
+                    TS:Create(obj, ti, {TextColor3 = theme.TextColor}):Play()
+                end
+                
+                -- Se for a linha separadora "—— SECTION ——"
+                if string.find(obj.Text, "——") then 
+                    TS:Create(obj, ti, {TextColor3 = theme.ElementStroke}):Play() 
+                end
+                
+            -- Frames de Dropdown e Backgrounds de Toggle
+            elseif (obj:IsA("Frame") and (obj.Name == "DropFrame" or obj.Parent:IsA("ScrollingFrame"))) then
+                TS:Create(obj, ti, {BackgroundColor3 = theme.ElementBackground}):Play()
             end
         end)
     end
 end
--- Fim da função ModifyTheme
 
 ----------------------------------------------------------------
 -- [ 3. LÓGICA DO AUTOFARM ]
@@ -428,9 +449,14 @@ local function CreatePage(name, pos)
 
     b.MouseEnter:Connect(function()
         if tweenOut then tweenOut:Cancel() end
-        -- Brilho dinâmico: um pouco mais claro que o fundo atual
-        tweenIn = TS:Create(b, ti, {BackgroundColor3 = Color3.fromRGB(70, 70, 70)})
-        TS:Create(s, ti, {Thickness = 2}):Play()
+        local activeTheme = Themes[CurrentThemeName]
+        -- No hover, ele fica levemente mais escuro ou mais claro dependendo do tema
+        local hoverColor = (CurrentThemeName == "Light" or CurrentThemeName == "Green" or CurrentThemeName == "Bloom" or CurrentThemeName == "Serenity") 
+            and Color3.fromRGB(220, 220, 220) 
+            or Color3.fromRGB(70, 70, 70)
+            
+        tweenIn = TS:Create(b, ti, {BackgroundColor3 = hoverColor})
+        TS:Create(s, ti, {Thickness = 2, Color = activeTheme.ElementStroke}):Play()
         tweenIn:Play()
     end)
 

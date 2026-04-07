@@ -356,6 +356,23 @@ local function CreateMainGUI()
     Content.Position = UDim2.new(0, 135, 0, 45)
     Content.BackgroundTransparency = 1
 
+    -- Nome/Logo acima dos botões na SideBar
+local SideTitle = Instance.new("TextLabel", SideBar)
+SideTitle.Size = UDim2.new(0, 200, 0, 40) -- Altura de 50 pixels
+SideTitle.Position = UDim2.new(0, 135, 0, 5) -- Um pouco de espaço do topo
+SideTitle.BackgroundTransparency = 1
+SideTitle.Text = "AXIOS" -- Nome que vai aparecer
+SideTitle.Font = Enum.Font.GothamBold
+SideTitle.TextSize = 20
+SideTitle.TextColor3 = Color3.fromRGB(255, 255, 255) -- Branco (ajusta conforme o tema)
+
+-- Efeito de degradê no texto (Opcional, mas fica estiloso)
+local UIGradient = Instance.new("UIGradient", SideTitle)
+UIGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 150, 150))
+})
+
     -- Botão Fechar Estilizado
     local CloseBtn = Instance.new("TextButton", MainFrame)
     CloseBtn.Name = "CloseBtn"

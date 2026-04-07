@@ -359,7 +359,7 @@ local function CreateMainGUI()
     -- Nome/Logo acima dos botões na SideBar
 local SideTitle = Instance.new("TextLabel", SideBar)
 SideTitle.Size = UDim2.new(0, 200, 0, 40) -- Altura de 50 pixels
-SideTitle.Position = UDim2.new(0, 100, 0, 5) -- Um pouco de espaço do topo
+SideTitle.Position = UDim2.new(0, 90, 0, 5) -- Um pouco de espaço do topo
 SideTitle.BackgroundTransparency = 1
 SideTitle.Text = "OP7DD DELÍCIA" -- Nome que vai aparecer
 SideTitle.Font = Enum.Font.GothamBold

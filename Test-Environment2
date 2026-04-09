@@ -86,6 +86,7 @@ local VIM = game:GetService("VirtualInputManager")
 -- [ 1. CONFIGURAÇÕES E DADOS GERAIS ]
 ----------------------------------------------------------------
 local isFarming = false
+local PotatoFarm = false
 local targetPot = nil
 local shortcutKey = Enum.KeyCode.RightShift
 local isSettingKey = false
@@ -281,6 +282,109 @@ function Actions.ExecutarReceita()
     end
     return "sucesso"
 end
+
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+        if PotatoFarm then
+            -- Função de segurança interna
+            local function check() 
+                return PotatoFarm and player.Character and player.Character:FindFirstChild("HumanoidRootPart") 
+            end
+
+            -- [RESET DE CICLO] Garante que começa sem itens na mão
+            if player.Character:FindFirstChildOfClass("Tool") then
+                player.Character.Humanoid:UnequipTools()
+            end
+            task.wait(0.5)
+
+            -- LOCAL 1: Início
+            if not check() then continue end
+            irPara(Vector3.new(-478.62, 3.86, -434.95))
+            interagir()
+            task.wait(1)
+
+-- LOCAL 2: Batata (Equipar e Segurar E)
+            if not check() then continue end
+            irPara(Vector3.new(-462.28, 3.86, -467.48))
+            
+            -- Foca na bancada
+            workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, Vector3.new(-462.28, 1.8, -467.48))
+            task.wait(0.5)
+            
+            -- 1. BUSCA E EQUIPA A BATATA (Essencial para o progresso contar)
+            local itemParaEquipar = player.Backpack:FindFirstChild("Potato")
+            if itemParaEquipar then
+                player.Character.Humanoid:EquipTool(itemParaEquipar)
+                task.wait(1.2) -- Tempo para o servidor registrar o item na mão
+                
+                local vim = game:GetService("VirtualInputManager")
+                
+                print("Item equipado. Segurando E por 3 segundos...")
+                -- 2. APERTA O E
+                vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+
+                local tempoInicial = tick()
+                while tick() - tempoInicial < 3.5 do 
+                    if not check() then break end
+                    task.wait(0.1)
+                end
+                
+                -- 3. SOLTA O E
+                vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                print("Ação finalizada.")
+            else
+                print("Erro: Você não tem a Potato na mochila!")
+            end
+            task.wait(0.5)
+
+            -- LOCAL 3: Saco de Batata
+            if not check() then continue end
+            irPara(Vector3.new(-462.12, 3.86, -473.57))
+            workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, Vector3.new(-462.12, 1.5, -473.57))
+            task.wait(0.8)
+            interagir()
+            task.wait(3)
+
+            -- LOCAL 4: Farinha
+            if not check() then continue end
+            irPara(Vector3.new(-462.76, 3.86, -522.47))
+            equiparItem("Flour")
+            equiparItem("Farinha")
+            task.wait(1)
+            interagir()
+            task.wait(3)
+
+            -- LOCAL 5: Finalização
+            if not check() then continue end
+            irPara(Vector3.new(-515.28, 3.86, -461.52))
+            interagir()
+            
+            -- [ESPERA INTELIGENTE] Verifica se o farm ainda está ON a cada segundo
+            print("Processando... Aguardando cooldown")
+            for i = 1, 61 do
+                if not check() then break end
+                task.wait(1)
+            end
+            
+            if check() then
+                interagir() -- Coleta o saco final
+                task.wait(2)
+                print("Ciclo reiniciando automaticamente...")
+                -- O loop volta sozinho para o topo (Local 1)
+            end
+        end
+    end
+end)
+
+local function segurarClique(duracao)
+    local vu = game:GetService("VirtualUser")
+    -- Simula o clique segurado usando o VirtualUser (mais potente)
+    vu:Button1Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    task.wait(duracao)
+    vu:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+end
+
 
 ----------------------------------------------------------------
 -- [ 4. MOTOR DA INTERFACE (UI ENGINE) ]
@@ -632,7 +736,11 @@ local ThemesTab = CreatePage("Temas", 4)
 
 -- Aba: AutoFarm
 FarmTab:Section("Controle Principal")
-FarmTab:Toggle("Auto Cooking Pot", function(v) isFarming = v end)
+FarmTab:Toggle("Marshmallows Farm", function(v) isFarming = v end)
+
+FarmTab:Section("Credits to OP7DD")
+
+FarmTab:Toggle("Potato Farm", function(v) PotatoFarm = v end)
 
 -- Aba: Inventário
 -- GRUPO 1: FINANCEIRO

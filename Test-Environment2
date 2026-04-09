@@ -83,6 +83,8 @@ local LocalPlayer = Players.LocalPlayer
 local VIM = game:GetService("VirtualInputManager")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local players = game:GetService("Players")
+local player = players.LocalPlayer
 
 ----------------------------------------------------------------
 -- [ 1. CONFIGURAÇÕES E DADOS GERAIS ]

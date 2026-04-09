@@ -213,7 +213,7 @@ local function ModifyTheme(themeName)
 end
 
 ----------------------------------------------------------------
--- [ 3. LÓGICA DO AUTOFARM ]
+-- [ 3. LÓGICA DO MARSHMALLOW AUTOFARM ]
 ----------------------------------------------------------------
 local function findNearestPot()
     local char = LocalPlayer.Character
@@ -282,6 +282,10 @@ function Actions.ExecutarReceita()
     end
     return "sucesso"
 end
+
+----------------------------------------------------------------
+-- [ 3. LÓGICA DO POTATO AUTOFARM]
+----------------------------------------------------------------
 
 task.spawn(function()
     while true do
@@ -385,6 +389,40 @@ local function segurarClique(duracao)
     vu:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
 end
 
+local function irPara(posicao)
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = player.Character.HumanoidRootPart
+        -- Velocidade entre 18 e 22 é o "limite" da maioria dos anti-cheats
+        local info = TweenInfo.new((hrp.Position - posicao).Magnitude / 16, Enum.EasingStyle.Linear)
+        local tween = TweenService:Create(hrp, info, {CFrame = CFrame.new(posicao)})
+
+        tween:Play()
+
+        -- Se desligar o farm no meio do caminho, o movimento para na hora
+        local conexao
+        conexao = RunService.Heartbeat:Connect(function()
+            if not PotatoFarm then
+                tween:Cancel()
+                conexao:Disconnect()
+            end
+        end)
+
+        tween.Completed:Wait()
+        if conexao then conexao:Disconnect() end
+
+        -- RESET DE FÍSICA: Isso impede o "puxão" após chegar
+        hrp.Velocity = Vector3.new(0,0,0)
+        task.wait(0.2) 
+    end
+end
+
+local function interagir()
+    task.wait(0.5)
+    -- Simula o aperto da tecla E
+    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.E, false, game)
+    task.wait(0.1)
+    game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.E, false, game)
+end
 
 ----------------------------------------------------------------
 -- [ 4. MOTOR DA INTERFACE (UI ENGINE) ]

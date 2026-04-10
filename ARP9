@@ -1,36 +1,783 @@
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Axios - God Farm", "Midnight")
-local Tab = Window:NewTab("Auto Farm")
-local Section = Tab:NewSection("Modificadores de Tarefa")
+-- [[ AXIOS HUB V2.1 - DEFINITIVE EDITION ]]
+local KeySystem = {
+    Enabled = true,
+    Key = nil, -- será carregada do arquivo externo
+    Status = false
+}
 
-Section:NewToggle("Interação Instantânea", "Tira o tempo de segurar o E", function(state)
-    _G.Instant = state
-    task.spawn(function()
-        while _G.Instant do
-            for _, v in pairs(workspace:GetDescendants()) do
-                if v:IsA("ProximityPrompt") then
-                    v.HoldDuration = 0 -- Não precisa mais segurar!
+local KeySystem = {
+    Enabled = true,
+    Key = nil,
+    Status = false
+}
+
+-- 1. Carregamento da Key Remota
+local success, code = pcall(function()
+    return game:HttpGet("https://raw.githubusercontent.com/Malwerot/test1/refs/heads/main/KeyConfig.lua")
+end)
+
+if success then
+    local KeyConfig = loadstring(code)()
+    KeySystem.Key = KeyConfig.RemoteKey
+else
+    warn("Falha ao carregar Key do servidor.")
+end
+
+-- 2. Função da Key UI (Corrigida para disparar o HUB)
+local function OpenKeySystem()
+    local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+    local Main = Instance.new("Frame", ScreenGui)
+    local TextBox = Instance.new("TextBox", Main)
+    local Submit = Instance.new("TextButton", Main)
+    local UICorner = Instance.new("UICorner", Main)
+
+    Main.Size = UDim2.new(0, 300, 0, 150)
+    Main.Position = UDim2.new(0.5, -150, 0.5, -75)
+    Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Instance.new("UIStroke", Main).Color = Color3.fromRGB(50, 50, 50)
+    UICorner.CornerRadius = UDim.new(0, 8)
+
+    TextBox.Size = UDim2.new(0, 240, 0, 40)
+    TextBox.Position = UDim2.new(0.5, -120, 0.3, 0)
+    TextBox.PlaceholderText = "Enter Key..."
+    TextBox.Text = ""
+    TextBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    TextBox.TextColor3 = Color3.new(1, 1, 1)
+    Instance.new("UICorner", TextBox).CornerRadius = UDim.new(0, 6)
+
+    Submit.Size = UDim2.new(0, 120, 0, 35)
+    Submit.Position = UDim2.new(0.5, -60, 0.7, 0)
+    Submit.Text = "Verify Axios"
+    Submit.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    Submit.TextColor3 = Color3.new(1, 1, 1)
+    Submit.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", Submit).CornerRadius = UDim.new(0, 6)
+
+    Submit.MouseButton1Click:Connect(function()
+        if TextBox.Text == KeySystem.Key then
+            KeySystem.Status = true
+            ScreenGui:Destroy()
+        else
+            TextBox.Text = ""
+            TextBox.PlaceholderText = "WRONG KEY!"
+            task.wait(1)
+            TextBox.PlaceholderText = "Enter Key..."
+        end
+    end)
+
+    -- Trava o script aqui até a key ser aceita
+    repeat task.wait() until KeySystem.Status == true
+end
+
+-- Executa o sistema de Key antes de tudo
+if KeySystem.Enabled then
+    OpenKeySystem()
+end
+----------------------------------------------------------------
+-- [ REST OF YOUR SCRIPT STARTS HERE ]
+----------------------------------------------------------------
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local VIM = game:GetService("VirtualInputManager")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local players = game:GetService("Players")
+local player = players.LocalPlayer
+
+----------------------------------------------------------------
+-- [ 1. CONFIGURAÇÕES E DADOS GERAIS ]
+----------------------------------------------------------------
+local isFarming = false
+local PotatoFarm = false
+local targetPot = nil
+local shortcutKey = Enum.KeyCode.RightShift
+local isSettingKey = false
+local autoF_Enabled = false
+local shiftPressed = false
+local CurrentThemeName = "Default" -- Rastreador de tema ativo
+
+local Themes = {
+  Default = { Background = Color3.fromRGB(25, 25, 25), Topbar = Color3.fromRGB(34, 34, 34), ElementBackground = Color3.fromRGB(35, 35, 35), ElementStroke = Color3.fromRGB(50, 50, 50), TextColor = Color3.fromRGB(240, 240, 240) },
+    BloodTheme = { Background = Color3.fromRGB(15, 0, 0), Topbar = Color3.fromRGB(35, 0, 0), ElementBackground = Color3.fromRGB(45, 5, 5), ElementStroke = Color3.fromRGB(200, 0, 0), TextColor = Color3.fromRGB(255, 200, 200) },
+    Ocean = { Background = Color3.fromRGB(20, 30, 30), Topbar = Color3.fromRGB(25, 40, 40), ElementBackground = Color3.fromRGB(30, 50, 50), ElementStroke = Color3.fromRGB(45, 70, 70), TextColor = Color3.fromRGB(230, 240, 240) },
+    AmberGlow = { Background = Color3.fromRGB(45, 30, 20), Topbar = Color3.fromRGB(55, 40, 25), ElementBackground = Color3.fromRGB(60, 45, 35), ElementStroke = Color3.fromRGB(85, 60, 45), TextColor = Color3.fromRGB(255, 245, 230) },
+    Amethyst = { Background = Color3.fromRGB(30, 20, 40), Topbar = Color3.fromRGB(40, 25, 50), ElementBackground = Color3.fromRGB(45, 30, 60), ElementStroke = Color3.fromRGB(70, 50, 85), TextColor = Color3.fromRGB(240, 240, 240) },
+    Light = { Background = Color3.fromRGB(245, 245, 245), Topbar = Color3.fromRGB(230, 230, 230), ElementBackground = Color3.fromRGB(240, 240, 240), ElementStroke = Color3.fromRGB(210, 210, 210), TextColor = Color3.fromRGB(40, 40, 40) },
+    Green = { Background = Color3.fromRGB(235, 245, 235), Topbar = Color3.fromRGB(210, 230, 210), ElementBackground = Color3.fromRGB(225, 240, 225), ElementStroke = Color3.fromRGB(180, 200, 180), TextColor = Color3.fromRGB(30, 60, 30) },
+    Bloom = { Background = Color3.fromRGB(255, 240, 245), Topbar = Color3.fromRGB(250, 220, 225), ElementBackground = Color3.fromRGB(255, 235, 240), ElementStroke = Color3.fromRGB(230, 200, 210), TextColor = Color3.fromRGB(60, 40, 50) },
+    DarkBlue = { Background = Color3.fromRGB(20, 25, 30), Topbar = Color3.fromRGB(30, 35, 40), ElementBackground = Color3.fromRGB(30, 35, 40), ElementStroke = Color3.fromRGB(45, 50, 60), TextColor = Color3.fromRGB(230, 230, 230) },
+    Serenity = { Background = Color3.fromRGB(240, 245, 250), Topbar = Color3.fromRGB(215, 225, 235), ElementBackground = Color3.fromRGB(210, 220, 230), ElementStroke = Color3.fromRGB(190, 200, 210), TextColor = Color3.fromRGB(50, 55, 60) }
+}
+
+-- Referências Globais da Interface
+local MainFrame, Stroke, SideBar, Content, InnerGlow
+local Pages = {}
+
+local States = { IDLE = "IDLE", BUSCANDO = "BUSCANDO", FARMANDO = "FARMANDO" }
+local currentState = States.IDLE
+
+local farmItems = {
+    {name = "Water", cooldown = 22},
+    {name = "Sugar Block Bag", cooldown = 2.8},
+    {name = "Gelatin", cooldown = 47},
+    {name = "Empty Bag", cooldown = 2},
+}
+
+local PRECOS_BAGS = {
+    ["Small Marshmallow Bag"] = 1470,
+    ["Medium Marshmallow Bag"] = 2840,
+    ["Large Marshmallow Bag"] = 4250
+}
+
+----------------------------------------------------------------
+-- [ 2. FUNÇÕES UTILITÁRIAS ]
+----------------------------------------------------------------
+local function notify(title, text, duration)
+    pcall(function() game:GetService("StarterGui"):SetCore("SendNotification", {Title = title, Text = text, Duration = duration or 4}) end)
+end
+
+local function randomWait(min, max) task.wait(math.random(min * 100, max * 100) / 100) end
+
+local function countItems(itemName)
+    local count = 0
+    local bp = LocalPlayer:FindFirstChild("Backpack")
+    local char = LocalPlayer.Character
+    local items = bp and bp:GetChildren() or {}
+    if char then for _, v in ipairs(char:GetChildren()) do if v:IsA("Tool") then table.insert(items, v) end end end
+    for _, item in ipairs(items) do if item.Name == itemName then count = count + 1 end end
+    return count
+end
+
+local function calcularVendaTotal()
+    local totalDinheiro, quantidadeTotal = 0, 0
+    local containers = {LocalPlayer:FindFirstChild("Backpack"), LocalPlayer.Character}
+    for _, folder in ipairs(containers) do
+        if folder then
+            for _, item in ipairs(folder:GetChildren()) do
+                if PRECOS_BAGS[item.Name] then totalDinheiro = totalDinheiro + PRECOS_BAGS[item.Name]; quantidadeTotal = quantidadeTotal + 1 end
+            end
+        end
+    end
+    return totalDinheiro, quantidadeTotal
+end
+
+local function ModifyTheme(themeName)
+    local theme = Themes[themeName]
+    if not theme or not MainFrame then return end
+    CurrentThemeName = themeName
+
+    local TS = game:GetService("TweenService")
+    local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quint)
+
+    -- 1. Fundo Principal e Barra Lateral
+    TS:Create(MainFrame, ti, {BackgroundColor3 = theme.Background}):Play()
+    if SideBar then TS:Create(SideBar, ti, {BackgroundColor3 = theme.Topbar}):Play() end
+    
+    -- 2. Atualiza os contornos principais (Neon/Bordas)
+    if Stroke then TS:Create(Stroke, ti, {Color = theme.ElementStroke}):Play() end
+    if InnerGlow then TS:Create(InnerGlow, ti, {Color = theme.ElementStroke}):Play() end
+
+    -- 3. Varredura de todos os elementos filhos
+    for _, obj in ipairs(MainFrame:GetDescendants()) do
+        pcall(function()
+            -- Botões de Aba (na SideBar) e Botões de Ação
+            if obj:IsA("TextButton") and obj.Name ~= "CloseBtn" then
+                TS:Create(obj, ti, {
+                    BackgroundColor3 = theme.ElementBackground, 
+                    TextColor3 = theme.TextColor
+                }):Play()
+                
+                local bStroke = obj:FindFirstChildOfClass("UIStroke")
+                if bStroke then 
+                    TS:Create(bStroke, ti, {Color = theme.ElementStroke}):Play() 
+                end
+
+            -- Textos e Títulos
+            elseif obj:IsA("TextLabel") then
+                -- Se for o Título Principal, mantemos branco ou cor de destaque
+                if obj.Text == "AXIOS // HUB" then
+                    TS:Create(obj, ti, {TextColor3 = (themeName == "Light" or themeName == "Green") and Color3.fromRGB(20,20,20) or Color3.new(1,1,1)}):Play()
+                else
+                    TS:Create(obj, ti, {TextColor3 = theme.TextColor}):Play()
+                end
+                
+                -- Se for a linha separadora "—— SECTION ——"
+                if string.find(obj.Text, "——") then 
+                    TS:Create(obj, ti, {TextColor3 = theme.ElementStroke}):Play() 
+                end
+                
+            -- Frames de Dropdown e Backgrounds de Toggle
+            elseif (obj:IsA("Frame") and (obj.Name == "DropFrame" or obj.Parent:IsA("ScrollingFrame"))) then
+                TS:Create(obj, ti, {BackgroundColor3 = theme.ElementBackground}):Play()
+            end
+        end)
+    end
+end
+
+----------------------------------------------------------------
+-- [ 3. LÓGICA DO MARSHMALLOW AUTOFARM ]
+----------------------------------------------------------------
+local function findNearestPot()
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+    local myPos = char.HumanoidRootPart.Position
+    local closest, shortestDist = nil, 75 
+
+    local locs = {
+        Workspace.Map.Houses:FindFirstChild("WH1") and Workspace.Map.Houses.WH1:FindFirstChild("Interior"),
+        Workspace:FindFirstChild("Map") and Workspace.Map:FindFirstChild("Locations") and Workspace.Map.Locations:FindFirstChild("Apartments") and Workspace.Map.Locations.Apartments:FindFirstChild("Home 1"),
+        Workspace.Map.Locations.Apartments:FindFirstChild("Home 2"),
+        Workspace.Map.Locations.Apartments:FindFirstChild("Home 3"),
+        Workspace.Map.Locations.Apartments:FindFirstChild("Home 4")
+    }
+
+    for _, loc in ipairs(locs) do
+        if loc then
+            for _, child in ipairs(loc:GetChildren()) do
+                if child.Name == "Cooking Pot" and child:IsA("BasePart") then
+                    local dist = (child.Position - myPos).Magnitude
+                    if dist < shortestDist then shortestDist = dist; closest = child end
                 end
             end
-            task.wait(2)
+        end
+    end
+    return closest
+end
+
+local function equipItem(itemName)
+    local char = LocalPlayer.Character; local bp = LocalPlayer:FindFirstChild("Backpack")
+    if not char or not char:FindFirstChild("Humanoid") or not bp then return false end
+    if char:FindFirstChild(itemName) then return true end
+    local tool = bp:FindFirstChild(itemName)
+    if tool then char.Humanoid:EquipTool(tool); return true end
+    return false
+end
+
+local Actions = {}
+function Actions.Procurar()
+    targetPot = findNearestPot()
+    return targetPot ~= nil
+end
+
+function Actions.ExecutarReceita()
+    for _, item in ipairs(farmItems) do
+        if not isFarming then return "abortado" end
+        if not targetPot or not targetPot.Parent then return "panela_sumiu" end
+
+        local equipped, tentativas = false, 0
+        while not equipped and isFarming and tentativas < 5 do
+            equipped = equipItem(item.name)
+            if not equipped then tentativas = tentativas + 1; randomWait(3, 5) end
+        end
+
+        if not equipped then return "falha_estoque" end
+        randomWait(1.1, 2.3)
+        
+        pcall(function()
+            local prompt = targetPot:FindFirstChild("Attachment") and targetPot.Attachment:FindFirstChild("ProximityPrompt")
+            if prompt then
+                prompt.MaxActivationDistance = 9999  --sniper do farm ksks
+                fireproximityprompt(prompt) end
+        end)
+
+        task.wait(item.cooldown + (math.random(15, 42) / 10))
+    end
+    return "sucesso"
+end
+
+----------------------------------------------------------------
+-- [ 4. MOTOR DA INTERFACE (UI ENGINE) ]
+----------------------------------------------------------------
+local function CreateMainGUI()
+    local targetParent = (gethui and gethui()) or (syn and syn.protect_gui and game:GetService("CoreGui")) or game:GetService("CoreGui")
+    local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+    gui.Name = "AxiosSystem_V2"
+    gui.ResetOnSpawn = false
+    
+    MainFrame = Instance.new("Frame", gui)
+    MainFrame.Size = UDim2.new(0, 460, 0, 340)
+    MainFrame.Position = UDim2.new(0.5, -230, 0.5, -170)
+    MainFrame.BackgroundColor3 = Themes.Default.Background
+    MainFrame.BorderSizePixel = 0
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+
+    -- Título Fodão (Ideia 5)
+    local Title = Instance.new("TextLabel", MainFrame)
+    Title.Size = UDim2.new(0, 120, 0, 40)
+    Title.Position = UDim2.new(0, 15, 0, 5)
+    Title.Text = "AXIOS // HUB"
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 15
+    Title.TextColor3 = Color3.new(1,1,1)
+    Title.TextXAlignment = "Left"
+    Title.BackgroundTransparency = 1
+    -- Title.TextLetterSpacing = 2  <-- REMOVA OU COMENTE ESTA LINHA
+
+    -- Barra de Status Dinâmica (Ideia 7 - Adaptada para ser uma linha estética)
+    local StatusBar = Instance.new("Frame", MainFrame)
+    StatusBar.Size = UDim2.new(1, -150, 0, 2)
+    StatusBar.Position = UDim2.new(0, 135, 0, 35)
+    StatusBar.BackgroundColor3 = Themes.Default.ElementStroke
+    StatusBar.BorderSizePixel = 0
+    local BarGradient = Instance.new("UIGradient", StatusBar)
+    BarGradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+
+    -- Neon Pulsante (Ideia 2)
+    Stroke = Instance.new("UIStroke", MainFrame)
+    Stroke.Color = Themes.Default.ElementStroke
+    Stroke.Thickness = 1.8
+    Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    InnerGlow = Instance.new("UIStroke", MainFrame)
+    InnerGlow.Color = Themes.Default.ElementStroke
+    InnerGlow.Thickness = 3.5
+    InnerGlow.Transparency = 0.6
+    InnerGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    -- Loop do Neon Pulsante
+    task.spawn(function()
+        while task.wait(1.5) do
+            if MainFrame then
+                game:GetService("TweenService"):Create(InnerGlow, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.3}):Play()
+                task.wait(1.5)
+                game:GetService("TweenService"):Create(InnerGlow, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.8}):Play()
+            end
+        end
+    end)
+
+    SideBar = Instance.new("Frame", MainFrame)
+    SideBar.Size = UDim2.new(0, 125, 1, 0)
+    SideBar.BackgroundColor3 = Themes.Default.Topbar
+    SideBar.BorderSizePixel = 0
+    Instance.new("UICorner", SideBar).CornerRadius = UDim.new(0, 12)
+
+    Content = Instance.new("Frame", MainFrame)
+    Content.Size = UDim2.new(1, -145, 1, -55)
+    Content.Position = UDim2.new(0, 135, 0, 45)
+    Content.BackgroundTransparency = 1
+
+    -- Nome/Logo acima dos botões na SideBar
+local SideTitle = Instance.new("TextLabel", SideBar)
+SideTitle.Size = UDim2.new(0, 200, 0, 40) -- Altura de 50 pixels
+SideTitle.Position = UDim2.new(0, 90, 0, 5) -- Um pouco de espaço do topo
+SideTitle.BackgroundTransparency = 1
+SideTitle.Text = "OP7DD DELÍCIA" -- Nome que vai aparecer
+SideTitle.Font = Enum.Font.GothamBold
+SideTitle.TextSize = 15
+SideTitle.TextColor3 = Color3.fromRGB(255, 255, 255) -- Branco (ajusta conforme o tema)
+
+-- Efeito de degradê no texto (Opcional, mas fica estiloso)
+local UIGradient = Instance.new("UIGradient", SideTitle)
+UIGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 150, 150))
+})
+
+    -- Botão Fechar Estilizado
+    local CloseBtn = Instance.new("TextButton", MainFrame)
+    CloseBtn.Name = "CloseBtn"
+    CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+    CloseBtn.Position = UDim2.new(1, -35, 0, 8)
+    CloseBtn.BackgroundTransparency = 1
+    CloseBtn.Text = "×"
+    CloseBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
+    CloseBtn.TextSize = 28
+    CloseBtn.MouseButton1Click:Connect(function() isFarming = false; gui:Destroy() end)
+
+    -- Draggable (Mantido)
+    local dragging, dragStart, startPos
+    MainFrame.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; dragStart = i.Position; startPos = MainFrame.Position end end)
+    UserInputService.InputChanged:Connect(function(i) if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then local d = i.Position - dragStart; MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y) end end)
+    UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+
+    -- Atalho
+    UserInputService.InputBegan:Connect(function(input, gpe)
+        if not gpe and input.KeyCode == shortcutKey and not isSettingKey then MainFrame.Visible = not MainFrame.Visible end
+    end)
+end
+
+local function CreatePage(name, pos)
+    local tabBtn = Instance.new("TextButton", SideBar)
+    tabBtn.Size = UDim2.new(1, -10, 0, 35)
+    tabBtn.Position = UDim2.new(0, 5, 0, (pos * 40) + 10)
+    tabBtn.BackgroundColor3 = Themes.Default.ElementBackground
+    tabBtn.Text = name
+    tabBtn.TextColor3 = Themes.Default.TextColor
+    tabBtn.Font = "GothamBold"
+    tabBtn.TextSize = 11
+    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 6)
+
+    local p = Instance.new("ScrollingFrame", Content)
+    p.Name = name
+    p.Size = UDim2.new(1, 0, 1, 0)
+    p.BackgroundTransparency = 1
+    p.Visible = false
+    p.ScrollBarThickness = 0
+    p.AutomaticCanvasSize = "Y"
+
+    local layout = Instance.new("UIListLayout", p)
+    layout.Padding = UDim.new(0, 8)
+    layout.HorizontalAlignment = "Center"
+    layout.SortOrder = Enum.SortOrder.LayoutOrder -- Organiza pelo número do LayoutOrder
+    
+    Pages[name] = p
+
+    tabBtn.MouseButton1Click:Connect(function() 
+        for _, pg in pairs(Pages) do pg.Visible = false end
+        p.Visible = true 
+    end)
+
+    local el = {}
+    local currentOrder = 0 -- Esse contador garante a ordem de cima para baixo
+
+    function el:Section(t) 
+        currentOrder = currentOrder + 1
+        local l = Instance.new("TextLabel", p)
+        l.LayoutOrder = currentOrder
+        l.Size = UDim2.new(1, -10, 0, 30)
+        l.BackgroundTransparency = 1
+        l.Text = "—— " .. t:upper() .. " ——"
+        l.TextColor3 = Themes.Default.ElementStroke
+        l.Font = "GothamBold"
+        l.TextSize = 10 
+    end
+
+    function el:Button(n, cb) 
+    currentOrder = currentOrder + 1
+    local b = Instance.new("TextButton", p)
+    b.LayoutOrder = currentOrder
+    b.Size = UDim2.new(1, -10, 0, 38)
+    b.BackgroundColor3 = Themes[CurrentThemeName].ElementBackground -- Usa o tema atual
+    b.Text = n
+    b.TextColor3 = Themes[CurrentThemeName].TextColor
+    b.Font = "GothamBold"
+    b.TextSize = 12
+    b.AutoButtonColor = false
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+
+    local s = Instance.new("UIStroke", b)
+    s.Color = Themes[CurrentThemeName].ElementStroke
+    s.Thickness = 1
+    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    local TS = game:GetService("TweenService")
+    local ti = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tweenIn, tweenOut
+
+    b.MouseEnter:Connect(function()
+        if tweenOut then tweenOut:Cancel() end
+        local activeTheme = Themes[CurrentThemeName]
+        -- No hover, ele fica levemente mais escuro ou mais claro dependendo do tema
+        local hoverColor = (CurrentThemeName == "Light" or CurrentThemeName == "Green" or CurrentThemeName == "Bloom" or CurrentThemeName == "Serenity") 
+            and Color3.fromRGB(220, 220, 220) 
+            or Color3.fromRGB(70, 70, 70)
+            
+        tweenIn = TS:Create(b, ti, {BackgroundColor3 = hoverColor})
+        TS:Create(s, ti, {Thickness = 2, Color = activeTheme.ElementStroke}):Play()
+        tweenIn:Play()
+    end)
+
+    b.MouseLeave:Connect(function()
+        if tweenIn then tweenIn:Cancel() end
+        -- BUSCA A COR DO TEMA QUE ESTÁ ATIVO NO MOMENTO
+        local activeTheme = Themes[CurrentThemeName]
+        tweenOut = TS:Create(b, ti, {
+            BackgroundColor3 = activeTheme.ElementBackground,
+            TextColor3 = activeTheme.TextColor
+        })
+        TS:Create(s, ti, {
+            Thickness = 1, 
+            Color = activeTheme.ElementStroke
+        }):Play()
+        tweenOut:Play()
+    end)
+
+    if cb then b.MouseButton1Click:Connect(function() 
+        b.TextSize = 10
+        task.wait(0.05)
+        b.TextSize = 12
+        cb(b) 
+    end) end
+    return b
+end
+
+    function el:Toggle(n, cb)
+        currentOrder = currentOrder + 1
+        local b = Instance.new("TextButton", p)
+        b.LayoutOrder = currentOrder
+        b.Size = UDim2.new(1, -10, 0, 35)
+        b.BackgroundColor3 = Themes.Default.ElementBackground
+        b.Text = n .. ": OFF"
+        b.TextColor3 = Color3.fromRGB(180, 180, 180)
+        b.Font = "GothamBold"
+        b.TextSize = 12
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+
+        local s = Instance.new("UIStroke", b)
+        s.Color = Themes.Default.ElementStroke
+        s.Thickness = 1
+        s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+        local act = false
+        b.MouseButton1Click:Connect(function() 
+            act = not act
+            b.Text = n .. (act and ": ON" or ": OFF")
+            b.TextColor3 = act and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(180, 180, 180)
+            cb(act) 
+        end)
+    end
+
+  function el:AnimatedToggle(n, cb)
+    currentOrder = currentOrder + 1
+    local bg = Instance.new("Frame", p)
+    bg.LayoutOrder = currentOrder
+    bg.Size = UDim2.new(1, -10, 0, 40)
+    bg.BackgroundColor3 = Themes.Default.ElementBackground
+    Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 6)
+    
+    local label = Instance.new("TextLabel", bg)
+    label.Size = UDim2.new(0.6, 0, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.Text = n
+    label.TextColor3 = Themes.Default.TextColor
+    label.Font = "GothamBold"
+    label.TextSize = 12
+    label.TextXAlignment = "Left"
+    label.BackgroundTransparency = 1
+
+    local switchBase = Instance.new("TextButton", bg)
+    switchBase.Size = UDim2.new(0, 45, 0, 22)
+    switchBase.Position = UDim2.new(1, -55, 0.5, -11)
+    switchBase.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    switchBase.Text = ""
+    Instance.new("UICorner", switchBase).CornerRadius = UDim.new(1, 0)
+
+    local circle = Instance.new("Frame", switchBase)
+    circle.Size = UDim2.new(0, 18, 0, 18)
+    circle.Position = UDim2.new(0, 2, 0.5, -9)
+    circle.BackgroundColor3 = Color3.new(1, 1, 1)
+    Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
+
+    local active = false
+    switchBase.MouseButton1Click:Connect(function()
+        active = not active
+        local targetPos = active and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
+        local targetColor = active and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(60, 60, 60)
+
+        -- Animação suave
+        game:GetService("TweenService"):Create(circle, TweenInfo.new(0.2), {Position = targetPos}):Play()
+        game:GetService("TweenService"):Create(switchBase, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
+        
+        cb(active)
+    end)
+end
+
+    function el:Label(t)
+        currentOrder = currentOrder + 1
+        local l = Instance.new("TextLabel", p)
+        l.Name = "ResultLabel"
+        l.LayoutOrder = currentOrder
+        l.Size = UDim2.new(1, -10, 0, 35)
+        l.BackgroundColor3 = Themes.Default.ElementBackground
+        l.Text = t
+        l.TextColor3 = Themes.Default.TextColor
+        l.Font = "Gotham"
+        l.TextSize = 11
+        Instance.new("UICorner", l).CornerRadius = UDim.new(0, 6)
+
+        return { 
+            Set = function(_, nt) 
+                l.Text = nt 
+            end 
+        }
+    end
+
+    function el:Dropdown(n, opts, cb)
+        currentOrder = currentOrder + 1
+        local f = Instance.new("Frame", p)
+        f.Name = "DropFrame"
+        f.LayoutOrder = currentOrder
+        f.Size = UDim2.new(1, -10, 0, 35)
+        f.BackgroundColor3 = Themes.Default.ElementBackground
+        Instance.new("UICorner", f).CornerRadius = UDim.new(0, 6)
+        
+        local b = Instance.new("TextButton", f)
+        b.Size = UDim2.new(1, 0, 1, 0)
+        b.BackgroundTransparency = 1
+        b.Text = n .. ": " .. opts[1]
+        b.TextColor3 = Themes.Default.TextColor
+        b.Font = "GothamBold"
+        b.TextSize = 12
+        local cur = 1
+        b.MouseButton1Click:Connect(function() 
+            cur = (cur % #opts) + 1
+            b.Text = n .. ": " .. opts[cur]
+            cb(opts[cur]) 
+        end)
+    end
+
+    return el
+end
+
+----------------------------------------------------------------
+-- [ 5. MONTAGEM DA INTERFACE ]
+----------------------------------------------------------------
+CreateMainGUI()
+
+local FarmTab = CreatePage("AutoFarm", 0)
+local CardTab = CreatePage("CardFarm", 1)
+local InfoTab = CreatePage("Inventário", 2)
+local ConfigTab = CreatePage("Ajustes", 3)
+local ThemesTab = CreatePage("Temas", 4)
+
+-- Aba: AutoFarm
+FarmTab:Section("Controle Principal")
+FarmTab:Toggle("Marshmallows Farm", function(v) isFarming = v end)
+
+FarmTab:Section("Credits to OP7DD")
+
+-- Aba: Inventário
+-- GRUPO 1: FINANCEIRO
+InfoTab:Section("Painel Financeiro")
+
+-- Truque: Criamos as variáveis vazias primeiro para o botão não dar erro de "nil"
+local LucroLabel
+local EstoqueLabel
+
+InfoTab:Button("Atualizar Valor das Bags 💵", function()
+    local grana, total = calcularVendaTotal()
+    if LucroLabel then
+        LucroLabel:Set("Lucro em Inventário: $" .. grana .. " (" .. total .. " bags)")
+    end
+end)
+
+-- Agora criamos a Label de verdade (ela vai aparecer embaixo do botão na UI)
+LucroLabel = InfoTab:Label("Lucro em Inventário: $0 (0 bags)")
+
+InfoTab:Button("Calcular Capacidade 🍡", function()
+    local p = math.min(countItems("Sugar Block Bag"), countItems("Water"), countItems("Gelatin"))        
+    if EstoqueLabel then
+        EstoqueLabel:Set("Capacidade para: " .. p .. " Marshmallows (" .. p .. " bags)")
+    end
+end)
+
+EstoqueLabel = InfoTab:Label("Estoque: Clique em calcular")
+
+InfoTab:Section("Interações")
+
+InfoTab:Button("Falar com Lamont Bell", function()
+    pcall(function()
+        local npc = Workspace:FindFirstChild("Folders") and Workspace.Folders:FindFirstChild("NPCs") and Workspace.Folders.NPCs:FindFirstChild("Lamont Bell")
+        if npc then
+            local upperTorso = npc:FindFirstChild("UpperTorso")
+            if upperTorso then
+                local pp = upperTorso:FindFirstChild("ProximityPrompt")
+                if pp then
+                    pp.HoldDuration = 0
+                    fireproximityprompt(pp)
+                end
+            end
         end
     end)
 end)
 
-Section:NewToggle("Auto-Desgrudar", "Pula e desancora ao interagir", function(state)
-    _G.AntiFreeze = state
+-- Aba: Ajustes
+ConfigTab:Section("Customização de Tecla")
+ConfigTab:Button("Mudar Atalho (Atual: RShift)", function(btnObj)
+    isSettingKey = true
+    btnObj.Text = "Pressione uma tecla..."
+    btnObj.TextColor3 = Themes.Default.ElementStroke
+    
+    local connection
+    connection = UserInputService.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Keyboard then
+            shortcutKey = input.KeyCode
+            btnObj.Text = "Atalho: " .. tostring(shortcutKey.Name)
+            btnObj.TextColor3 = Themes.Default.TextColor
+            isSettingKey = false
+            connection:Disconnect()
+        end
+    end)
 end)
 
--- Lógica para desgrudar automaticamente ao terminar uma ação
-game:GetService("ProximityPromptService").PromptButtonHoldEnded:Connect(function(prompt, player)
-    if _G.AntiFreeze and player == game.Players.LocalPlayer then
-        task.wait(0.1)
-        local char = player.Character
-        if char then
-            char.HumanoidRootPart.Anchored = false
-            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
+-- Novo Toggle Animado para o F
+ConfigTab:Section("Utilitários")
+ConfigTab:AnimatedToggle("Auto-F (Hold Shift)", function(v) 
+    autoF_Enabled = v 
+end)
+
+-- Detecção do Shift (LShift ou RShift)
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
+        shiftPressed = true
     end
 end)
 
-print("Novo sistema carregado. Tente a Interação Instantânea!")
+UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
+        shiftPressed = false
+    end
+end)
+
+-- Loop do Auto-F (Simulação de Evento de Input)
+-- Loop do Auto-F
+task.spawn(function()
+    while true do
+        if autoF_Enabled and shiftPressed then
+            -- Simula o pressionamento da tecla F
+            VIM:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+            task.wait(0.05)
+            VIM:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+        end
+        task.wait(0.5) -- Espera 0.5 msegundos para repetir
+    end
+end)
+
+
+-- Aba: Temas
+ThemesTab:Section("Aparência do HUB")
+-- Aqui usei o seu Dropdown com a lista de nomes que você já tinha
+ThemesTab:Dropdown("Tema Atual", {"Default", "AmberGlow", "Amethyst", "Ocean", "BloodTheme", "Light", "Green", "Bloom", "DarkBlue", "Serenity"}, function(selected)
+    if Themes[selected] then 
+        ModifyTheme(selected) 
+    end
+end)
+
+-- Define a página inicial
+Pages["AutoFarm"].Visible = true
+
+----------------------------------------------------------------
+-- [ 6. LOOP PRINCIPAL DO SCRIPT ]
+----------------------------------------------------------------
+task.spawn(function()
+    while true do
+        if not isFarming then 
+            currentState = States.IDLE 
+        else
+            if currentState == States.IDLE then
+                currentState = States.BUSCANDO
+            elseif currentState == States.BUSCANDO then
+                if Actions.Procurar() then currentState = States.FARMANDO else task.wait(4) end
+            elseif currentState == States.FARMANDO then
+                local res = Actions.ExecutarReceita()
+                if res == "sucesso" then 
+                    randomWait(2, 4); currentState = States.BUSCANDO
+                elseif res == "falha_estoque" then 
+                    isFarming = false; currentState = States.IDLE
+                    notify("AXIOS", "Farm parado: Sem itens")
+                elseif res == "panela_sumiu" then 
+                    currentState = States.BUSCANDO 
+                end
+            end
+        end
+        task.wait(0.2)
+    end
+end)
+
+notify("AXIOS HUB V2.1", "Carregado com Sucesso! Aperte RightShift para minimizar.")

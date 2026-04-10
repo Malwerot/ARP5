@@ -417,7 +417,7 @@ task.spawn(function()
 
             -- LOCAL 5: Finalização
             if not check() then continue end
-            irPara(Vector3.new(-515.28, 3.86, -461.52))
+            irPara(Vector3.new(-497.04, 3.86, -481.17))
             interagir()
             
             -- [ESPERA INTELIGENTE] Verifica se o farm ainda está ON a cada segundo
